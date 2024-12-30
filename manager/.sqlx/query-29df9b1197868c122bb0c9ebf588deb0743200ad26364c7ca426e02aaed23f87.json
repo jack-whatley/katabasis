@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT id, name, game, game_version, created, modified, last_played\n                FROM collections\n            WHERE id IN ($1)",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "game",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "game_version",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "created",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "modified",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_played",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "29df9b1197868c122bb0c9ebf588deb0743200ad26364c7ca426e02aaed23f87"
+}
