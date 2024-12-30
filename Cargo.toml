@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "katabasis-cli",
+    "manager"
+]
+
+[profile.release]
+strip = true # Remove Debug Symbols
+lto = true # Enable Link to Optimisations
+panic = "abort"
+codegen-units = 1
+opt-level = "s"
