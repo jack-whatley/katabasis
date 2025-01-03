@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use clap::{Parser, Subcommand};
-use manager::{collections, SupportedGames};
+use manager::{collections, SupportedGames, SupportedPluginSources};
 
 #[derive(Parser)]
 #[command(version, about = "A CLI for managing and installing mod collections using the katabasis API.", long_about = None)]
@@ -32,10 +32,24 @@ enum CollectionCreate {
     List {
         #[arg(short, long)]
         number: Option<u32>,
+
+        #[arg(short, long)]
+        plugin: Option<String>,
     },
     Remove {
         #[arg(short, long)]
         id: String,
+    },
+    RemoveAll,
+    AddPlugin {
+        #[arg(short, long)]
+        collection: String,
+
+        #[arg(short, long)]
+        source: String,
+
+        #[arg(short, long)]
+        url: String
     }
 }
 
@@ -59,20 +73,37 @@ async fn main() -> manager::Result<()> {
 
                     println!("Created Collection: {}", collection_id);
                 }
-                Some(CollectionCreate::List { number }) => {
-                    let collections = collections::get_all(number.clone()).await?;
+                Some(CollectionCreate::List { number, plugin }) => {
+                    if plugin.is_none() {
+                        let collections = collections::get_all(number.clone()).await?;
 
-                    println!("Found {} collections:", collections.len());
+                        println!("Found {} collections:", collections.len());
 
-                    for collection in collections {
-                        println!("- {}", collection);
+                        for collection in collections {
+                            println!("- {}", collection);
+                        }
+                    }
+                    else {
+                        let plugin_id = plugin.clone().unwrap();
+
+                        let plugins = collections::fetch_all_plugins(&plugin_id).await?;
+
+                        for plugin in plugins {
+                            println!("- {:#?}", plugin);
+                        }
                     }
                 },
                 Some(CollectionCreate::Remove { id }) => {
                     collections::remove(id.clone()).await?;
-                }
+                },
+                Some(CollectionCreate::RemoveAll) => {
+                    collections::remove_all().await?;
+                },
                 None => {
                     println!("Please provide the required arguments, run the command katabasis-cli.exe collection create -h / --help for help.");
+                }
+                Some(CollectionCreate::AddPlugin { collection, source, url }) => {
+                    collections::add_plugin(collection.as_str(), SupportedPluginSources::from(source.clone()), url.as_str()).await?;
                 }
             }
         }

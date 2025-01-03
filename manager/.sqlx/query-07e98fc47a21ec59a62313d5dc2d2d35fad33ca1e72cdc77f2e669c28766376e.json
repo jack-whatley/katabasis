@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO collections_plugins_link (\n                    collection_id, plugin_id\n                )\n                VALUES (\n                    $1, $2\n                )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "07e98fc47a21ec59a62313d5dc2d2d35fad33ca1e72cdc77f2e669c28766376e"
+}

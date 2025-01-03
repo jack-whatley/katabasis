@@ -29,6 +29,9 @@ pub enum Error {
 
     #[error("Zip Opening Error: {0}")]
     ZipOpeningError(#[from] zip::result::ZipError),
+
+    #[error("SQLite Error: {0}")]
+    SQLiteStringError(String)
 }
 
 // impl<E: Into<Error>> From<E> for Error {

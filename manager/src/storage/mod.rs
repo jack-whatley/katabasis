@@ -4,6 +4,7 @@ use crate::storage::dir::Directories;
 
 mod dir;
 mod database;
+pub mod plugin;
 
 static KB_STATE: OnceCell<Arc<KbApp>> = OnceCell::const_new();
 

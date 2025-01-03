@@ -2,6 +2,7 @@ use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use crate::setup::games::SupportedGames;
+use crate::storage::plugin::Plugin;
 
 /// The data structure used for storing mod collections in katabasis
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,5 +184,16 @@ impl Collection {
         }
 
         Ok(())
+    }
+
+    pub async fn add_plugin(
+        &self,
+        plugin: &Plugin,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
+    ) -> crate::Result<()> {
+        plugin.update(
+            self.id.clone(),
+            db
+        ).await
     }
 }

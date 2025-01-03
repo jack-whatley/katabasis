@@ -1,6 +1,7 @@
 use bytes::Bytes;
 use lazy_static::lazy_static;
 use reqwest::Method;
+use serde::de::DeserializeOwned;
 use thiserror::Error;
 use crate::storage::NetSemaphore;
 
@@ -86,10 +87,10 @@ pub async fn fetch_url(
     unreachable!()
 }
 
-pub async fn fetch_json(
+pub async fn fetch_json<T>(
     url: &str,
     semaphore: &NetSemaphore
-) -> HttpResult<serde_json::Value> {
+) -> HttpResult<T> where T: DeserializeOwned {
     let fetched_bytes = fetch_url(Method::GET, url, semaphore).await?;
 
     Ok(serde_json::from_slice(&fetched_bytes)?)

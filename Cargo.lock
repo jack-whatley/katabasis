@@ -1268,6 +1268,7 @@ dependencies = [
  "steamlocate",
  "thiserror 2.0.8",
  "tokio",
+ "url",
  "uuid",
  "zip",
 ]

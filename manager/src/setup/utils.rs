@@ -8,7 +8,7 @@ const BEPINEX_REGEX_STR: &'static str = r#"BepInEx_win_x64_([0-9]+(\.[0-9]+)+)\.
 
 /// Returns download link to the latest version of BepInEx mod loader (for windows)
 pub async fn get_latest_bepinex(net_semaphore: &NetSemaphore) -> crate::Result<(String, String)> {
-    let body = download::fetch_json(
+    let body = download::fetch_json::<serde_json::Value>(
         GITHUB_BEPINEX_URL,
         net_semaphore
     ).await?;

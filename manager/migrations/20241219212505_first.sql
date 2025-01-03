@@ -11,3 +11,20 @@ CREATE TABLE collections (
 
     PRIMARY KEY (id)
 );
+
+CREATE TABLE plugins (
+    id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    source TEXT NOT NULL,
+    api_url TEXT NOT NULL,
+
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE collections_plugins_link (
+    collection_id TEXT NOT NULL,
+    plugin_id TEXT NOT NULL,
+
+    -- Using compound primary key to prevent duplicate plugins appearing in collections
+    PRIMARY KEY (collection_id, plugin_id)
+);
