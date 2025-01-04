@@ -53,12 +53,26 @@ pub async fn add_plugin(collection_id: &str, plugin_source: SupportedPluginSourc
 
     let created_plugin = plugin_handler.parse_share_url(plugin_url).await?;
 
+    plugin_handler.download_plugin(&collection_id, &created_plugin).await?;
+
     created_plugin.update(
         collection_id.to_string(),
         &state.db_pool
     ).await?;
 
-    // download step happens here...
+    Ok(())
+}
+
+pub async fn remove_plugin(collection_id: &str, plugin_id: &str) -> crate::Result<()> {
+    let state = KbApp::get().await?;
+
+    let target_plugin = Plugin::get(plugin_id, &state.db_pool).await?.ok_or(
+        crate::error::Error::SQLiteStringError(
+            format!("Plugin {} not found", plugin_id)
+        )
+    )?;
+
+    target_plugin.remove(collection_id, &state.directories, &state.db_pool).await?;
 
     Ok(())
 }

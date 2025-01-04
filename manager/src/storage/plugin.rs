@@ -1,6 +1,11 @@
+use std::fs::File;
+use std::io::Write;
 use serde::{Deserialize, Serialize};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 use crate::api::thunderstore;
+use crate::storage::dir::Directories;
 use crate::storage::KbApp;
 use crate::utils::download;
 
@@ -36,6 +41,8 @@ impl SupportedPluginSources {
 #[allow(async_fn_in_trait)]
 pub trait SourceHandler {
     async fn parse_share_url(&self, url: &str) -> crate::Result<Plugin>;
+
+    async fn download_plugin(&self, collection_id: &str, plugin: &Plugin) -> crate::Result<()>;
 }
 
 /// Implementation for parsing the Thunderstore API
@@ -62,8 +69,52 @@ impl SourceHandler for ThunderstoreHandler {
             id: format!("{}", plugin_uuid.as_hyphenated()),
             name: package.name,
             source: SupportedPluginSources::Thunderstore,
-            api_url: package.package_url,
+            api_url: req_url,
         })
+    }
+
+    async fn download_plugin(&self, collection_id: &str, plugin: &Plugin) -> crate::Result<()> {
+        let state = KbApp::get().await?;
+
+        let download_path = state.directories
+            .collection_plugin_dir(collection_id)
+            .join(format!("{}.zip", &plugin.name));
+
+        // If download path somehow already exists there is no point downloading the same file again
+        // likely will want to prefer to remove the file in the future once versioning is implemented.
+        if !download_path.exists() {
+            let package = download::fetch_json::<thunderstore::Package>(
+                &plugin.api_url,
+                &state.net_semaphore
+            ).await?;
+
+            let package_bytes = download::fetch_url(
+                reqwest::Method::GET,
+                &package.latest.download_url,
+                &state.net_semaphore
+            ).await?;
+
+            let mut download_file: fs::File = fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(&download_path)
+                .await?;
+
+            download_file.write_all(&package_bytes).await?;
+        }
+
+        let archive = File::open(&download_path)?;
+        let mut archive = zip::ZipArchive::new(archive)?;
+
+        archive.extract(
+            state.directories
+            .collection_plugin_dir(collection_id)
+            .join(&plugin.name)
+        )?;
+
+        fs::remove_file(&download_path).await?;
+
+        Ok(())
     }
 }
 
@@ -94,6 +145,13 @@ impl Plugin {
             .collect();
 
         Ok(Self::get_many(collected_ids.as_slice(), db).await?)
+    }
+
+    pub async fn get(
+        id: &str,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
+    ) -> crate::Result<Option<Self>> {
+        Ok(Self::get_many(&[id], db).await?.into_iter().next())
     }
 
     pub async fn get_many(
@@ -168,6 +226,35 @@ impl Plugin {
                 ))
             }
         }
+
+        Ok(())
+    }
+
+    pub async fn remove(
+        &self,
+        collection_id: &str,
+        directories: &Directories,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
+    ) -> crate::Result<()> {
+        let download_path = directories.collection_plugin_dir(collection_id).join(&self.name);
+
+        if download_path.exists() {
+            fs::remove_file(download_path).await?;
+        }
+
+        sqlx::query!(
+            "
+                DELETE FROM collections_plugins_link WHERE plugin_id = $1
+            ",
+            self.id
+        ).execute(db).await?;
+
+        sqlx::query!(
+            "
+                DELETE FROM plugins WHERE id = $1
+            ",
+            self.id
+        ).execute(db).await?;
 
         Ok(())
     }

@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use clap::{Parser, Subcommand};
 use manager::{collections, SupportedGames, SupportedPluginSources};
+use anyhow::Result;
 
 #[derive(Parser)]
 #[command(version, about = "A CLI for managing and installing mod collections using the katabasis API.", long_about = None)]
@@ -50,6 +51,13 @@ enum CollectionCreate {
 
         #[arg(short, long)]
         url: String
+    },
+    RemovePlugin {
+        #[arg(short, long)]
+        cid: String,
+
+        #[arg(short, long)]
+        pid: String,
     }
 }
 
@@ -60,7 +68,7 @@ async fn create_collection(name: String, game: String, game_version: Option<Stri
 }
 
 #[tokio::main]
-async fn main() -> manager::Result<()> {
+async fn main() -> Result<()> {
     let cli = CLI::parse();
 
     match &cli.command {
@@ -104,6 +112,9 @@ async fn main() -> manager::Result<()> {
                 }
                 Some(CollectionCreate::AddPlugin { collection, source, url }) => {
                     collections::add_plugin(collection.as_str(), SupportedPluginSources::from(source.clone()), url.as_str()).await?;
+                }
+                Some(CollectionCreate::RemovePlugin { cid, pid }) => {
+                    collections::remove_plugin(cid.as_str(), pid.as_str()).await?;
                 }
             }
         }

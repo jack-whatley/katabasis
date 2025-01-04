@@ -8,6 +8,8 @@ pub(crate) const COLLECTIONS_DIR: &'static str = "collections";
 
 pub(crate) const LOADERS_DIR: &'static str = "loaders";
 
+pub(crate) const PLUGIN_DIR: &'static str = "plugins";
+
 pub struct Directories {
     pub app_dir: PathBuf
 }
@@ -60,5 +62,10 @@ impl Directories {
     #[inline]
     pub fn collection(&self, collection_id: &str) -> PathBuf {
         self.collections_dir().join(collection_id)
+    }
+
+    #[inline]
+    pub fn collection_plugin_dir(&self, collection_id: &str) -> PathBuf {
+        self.collection(collection_id).join(PLUGIN_DIR)
     }
 }

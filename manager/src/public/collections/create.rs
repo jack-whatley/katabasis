@@ -39,7 +39,13 @@ pub async fn create(
 
     fs::create_dir_all(state.directories.collection(&collection.id)).await.map_err(|err| {
         error::Error::FileSystemError(
-            format!("Failed to create specific collections directory: {}", err)
+            format!("Failed to create specific collection directory: {}", err)
+        )
+    })?;
+
+    fs::create_dir_all(state.directories.collection_plugin_dir(&collection.id)).await.map_err(|err| {
+        error::Error::FileSystemError(
+            format!("Failed to create specific collection plugin directory: {}", err)
         )
     })?;
 
