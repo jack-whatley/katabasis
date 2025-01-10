@@ -1,0 +1,15 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+# Allowing possibility of cargo version in future
+[[bin]]
+name = "katabasis"
+path = "src/bin/katabasis.rs"
+
+[dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
+
+# [lints]
+# workspace = true
