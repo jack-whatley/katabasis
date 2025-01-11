@@ -31,7 +31,13 @@ pub enum Error {
     ZipOpeningError(#[from] zip::result::ZipError),
 
     #[error("SQLite Error: {0}")]
-    SQLiteStringError(String)
+    SQLiteStringError(String),
+
+    #[error("Blocking Error: {0}")]
+    BlockingError(#[from] tokio::task::JoinError),
+
+    #[error("Export Serialisation Error: {0}")]
+    ExportSerialisationError(#[from] toml::ser::Error),
 }
 
 // impl<E: Into<Error>> From<E> for Error {

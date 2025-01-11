@@ -28,6 +28,7 @@ impl SupportedGames {
         }
     }
 
+    /// Returns the directory of the game executable.
     pub fn get_game_dir(&self) -> crate::Result<PathBuf> {
         let steam_dir = SteamDir::locate()?;
 

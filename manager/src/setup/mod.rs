@@ -4,7 +4,7 @@ use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use crate::setup::utils::get_latest_bepinex;
 use crate::storage::KbApp;
-use crate::SupportedLoaders;
+use crate::{SupportedGames, SupportedLoaders};
 use crate::SupportedLoaders::BepInEx;
 use crate::utils::download;
 
@@ -22,6 +22,8 @@ pub trait SetupLoader {
     fn is_setup<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<bool>;
 
     async fn setup_game<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<()>;
+
+    async fn create_mod_symlinks<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()>;
 }
 
 /// Returns the correct setup tool for the target loader
@@ -80,6 +82,41 @@ impl SetupLoader for BepInExLoader {
 
         let mut zip = zip::ZipArchive::new(std::fs::File::open(download_path)?)?;
         zip.extract(target_dir.as_ref())?;
+
+        Ok(())
+    }
+
+    async fn create_mod_symlinks<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()> {
+        // Cloning this value to pass to blocking task (there is probably a better solution)
+        let clone_dir = mod_dir.as_ref().to_path_buf();
+
+        let read_dir = tokio::task::spawn_blocking(
+            move || {
+                std::fs::read_dir(clone_dir)
+            }
+        ).await??;
+
+        let install_dir = game_type
+            .get_game_dir()?
+            .join("BepInEx")
+            .join("plugins");
+
+        for file in read_dir {
+            let entry = file?;
+            let result: crate::Result<()>;
+
+            // Create symlink if file (assuming dll) else copy directories
+            if entry.path().is_file() {
+                result = utils::symlink_file(entry.path(), install_dir.join(entry.file_name()));
+            }
+            else {
+                result = utils::symlink_dir(entry.path(), install_dir.join(entry.file_name()));
+            }
+
+            if result.is_err() {
+                println!("Failed to create symlinks, please run this command as admin on Windows...");
+            }
+        }
 
         Ok(())
     }

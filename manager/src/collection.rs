@@ -1,8 +1,10 @@
+use std::path::Path;
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use crate::setup::games::SupportedGames;
-use crate::storage::plugin::Plugin;
+use crate::storage::plugin::{ExportPlugin, Plugin};
 
 /// The data structure used for storing mod collections in katabasis
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +28,14 @@ struct IntermediateCollection {
     created: i64,
     modified: i64,
     last_played: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ExportCollection {
+    name: String,
+    game: SupportedGames,
+    game_version: String,
+    plugins: Vec<ExportPlugin>
 }
 
 impl TryFrom<IntermediateCollection> for Collection {
@@ -195,5 +205,43 @@ impl Collection {
             self.id.clone(),
             db
         ).await
+    }
+
+    pub async fn update_modified(
+        id: &str,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
+    ) -> crate::Result<()> {
+        let timestamp = Utc::now().timestamp();
+
+        sqlx::query!(
+            "
+                UPDATE collections SET modified = $1 WHERE id = $2
+            ",
+            timestamp,
+            id
+        ).execute(db).await?;
+
+        Ok(())
+    }
+
+    pub async fn export_to_file<P: AsRef<Path>>(
+        &self,
+        file_path: P,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
+    ) -> crate::Result<()> {
+        let plugins: Vec<ExportPlugin> = Plugin::from_collection(&self.id, db).await?.iter().map(|plugin| plugin.to_export()).collect();
+        let export_collection = ExportCollection { name: self.name.clone(), game: self.game.clone(), game_version: self.game_version.clone(), plugins };
+
+        let mut export_file = fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&file_path)
+            .await?;
+
+        let string_out = toml::to_string(&export_collection)?;
+
+        export_file.write_all(string_out.as_bytes()).await?;
+
+        Ok(())
     }
 }

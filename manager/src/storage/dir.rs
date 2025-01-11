@@ -10,6 +10,8 @@ pub(crate) const LOADERS_DIR: &'static str = "loaders";
 
 pub(crate) const PLUGIN_DIR: &'static str = "plugins";
 
+pub(crate) const EXPORT_DIR: &'static str = "exports";
+
 pub struct Directories {
     pub app_dir: PathBuf
 }
@@ -26,25 +28,39 @@ impl Directories {
             )
         )?;
 
-        fs::create_dir_all(&default_dir).await.map_err(|err| {
-            error::Error::FileSystemError(
-                format!("Failed to create the default application directory: {}", err)
-            )
-        })?;
+        if !default_dir.exists() {
+            fs::create_dir_all(&default_dir).await.map_err(|err| {
+                error::Error::FileSystemError(
+                    format!("Failed to create the default application directory: {}", err)
+                )
+            })?;
+        }
 
         let directories = Self { app_dir: default_dir };
 
-        fs::create_dir_all(directories.collections_dir()).await.map_err(|err| {
-            error::Error::FileSystemError(
-                format!("Failed to create the collections directory: {}", err)
-            )
-        })?;
+        if !directories.collections_dir().exists() {
+            fs::create_dir_all(directories.collections_dir()).await.map_err(|err| {
+                error::Error::FileSystemError(
+                    format!("Failed to create the collections directory: {}", err)
+                )
+            })?;
+        }
 
-        fs::create_dir_all(directories.loaders_dir()).await.map_err(|err| {
-            error::Error::FileSystemError(
-                format!("Failed to create the collections directory: {}", err)
-            )
-        })?;
+        if !directories.loaders_dir().exists() {
+            fs::create_dir_all(directories.loaders_dir()).await.map_err(|err| {
+                error::Error::FileSystemError(
+                    format!("Failed to create the loaders directory: {}", err)
+                )
+            })?;
+        }
+
+        if !directories.export_dir().exists() {
+            fs::create_dir_all(directories.export_dir()).await.map_err(|err| {
+                error::Error::FileSystemError(
+                    format!("Failed to create the export directory: {}", err)
+                )
+            })?;
+        }
 
         Ok(directories)
     }
@@ -57,6 +73,11 @@ impl Directories {
     #[inline]
     pub fn loaders_dir(&self) -> PathBuf {
         self.app_dir.join(LOADERS_DIR)
+    }
+
+    #[inline]
+    pub fn export_dir(&self) -> PathBuf {
+        self.app_dir.join(EXPORT_DIR)
     }
 
     #[inline]

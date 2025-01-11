@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT id, name, source, api_url\n                FROM plugins\n                WHERE id IN ($1)\n            ",
+  "query": "\n                SELECT id, name, source, api_url\n                FROM plugins\n                WHERE id IN (SELECT value FROM json_each($1))\n            ",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "2f7205e7271f29b149bd9fd2c6774396a8173477fdb6ce6d2a926797e8035a0d"
+  "hash": "d4b462eae719c5de95dd449dac54721b8c4c0932bc411eb83da762f35b33b4fb"
 }

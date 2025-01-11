@@ -58,6 +58,14 @@ enum CollectionCreate {
 
         #[arg(short, long)]
         pid: String,
+    },
+    InstallCollection {
+        #[arg(long)]
+        id: String
+    },
+    Export {
+        #[arg(long)]
+        id: String
     }
 }
 
@@ -115,6 +123,14 @@ async fn main() -> Result<()> {
                 }
                 Some(CollectionCreate::RemovePlugin { cid, pid }) => {
                     collections::remove_plugin(cid.as_str(), pid.as_str()).await?;
+                }
+                Some(CollectionCreate::InstallCollection { id }) => {
+                    collections::install(&id).await?;
+                }
+                Some(CollectionCreate::Export { id }) => {
+                    let file_path = collections::export(&id).await?;
+
+                    println!("Exported to: {}", file_path);
                 }
             }
         }

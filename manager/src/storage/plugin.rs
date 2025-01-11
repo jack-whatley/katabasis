@@ -1,9 +1,11 @@
 use std::fs::File;
+use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 use crate::api::thunderstore;
+use crate::collection::Collection;
 use crate::storage::dir::Directories;
 use crate::storage::KbApp;
 use crate::utils::download;
@@ -42,6 +44,8 @@ pub trait SourceHandler {
     async fn parse_share_url(&self, url: &str) -> crate::Result<Plugin>;
 
     async fn download_plugin(&self, collection_id: &str, plugin: &Plugin) -> crate::Result<()>;
+
+    async fn get_plugin_file_dir(&self, plugin: &Plugin) -> crate::Result<PathBuf>;
 }
 
 /// Implementation for parsing the Thunderstore API
@@ -115,17 +119,46 @@ impl SourceHandler for ThunderstoreHandler {
 
         Ok(())
     }
+
+    async fn get_plugin_file_dir(&self, plugin: &Plugin) -> crate::Result<PathBuf> {
+        let state = KbApp::get().await?;
+
+        let collection = plugin.get_collection(&state.db_pool).await?;
+
+        let collection_dir = state.directories
+            .collection_plugin_dir(&collection.id)
+            .join(&plugin.name)
+            .join("BepInEx")
+            .join("plugins");
+
+        Ok(collection_dir)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Plugin {
-    id: String,
+    pub id: String,
+    pub name: String,
+    pub source: SupportedPluginSources,
+    pub api_url: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct ExportPlugin {
     name: String,
     source: SupportedPluginSources,
     api_url: String
 }
 
 impl Plugin {
+    pub(crate) fn to_export(&self) -> ExportPlugin {
+        ExportPlugin {
+            name: self.name.clone(),
+            source: self.source.clone(),
+            api_url: self.api_url.clone()
+        }
+    }
+
     pub async fn from_collection(
         collection_id: &str,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
@@ -146,6 +179,25 @@ impl Plugin {
         Ok(Self::get_many(collected_ids.as_slice(), db).await?)
     }
 
+    pub async fn get_collection(
+        &self,
+        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
+    ) -> crate::Result<Collection> {
+        let collection_id = sqlx::query!(
+            "
+                SELECT collection_id FROM collections_plugins_link
+                WHERE plugin_id = $1
+            ",
+            self.id
+        ).fetch_one(db).await?;
+
+        Collection::get(&collection_id.collection_id, db).await?.ok_or(
+            crate::error::Error::SQLiteStringError(
+                format!("Failed to find collection with id {}", collection_id.collection_id)
+            )
+        )
+    }
+
     pub async fn get(
         id: &str,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
@@ -157,16 +209,20 @@ impl Plugin {
         ids: &[&str],
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<Vec<Self>> {
-        let joined_ids = ids.join(", ");
+        let collected_ids = serde_json::to_string(&ids).map_err(|err| {
+            crate::error::Error::ParseError(
+                format!("Failed to convert ids {:?} to JSON: '{:#?}'", ids, err)
+            )
+        })?;
 
         let query_results = sqlx::query_as!(
             Self,
             "
                 SELECT id, name, source, api_url
                 FROM plugins
-                WHERE id IN ($1)
+                WHERE id IN (SELECT value FROM json_each($1))
             ",
-            joined_ids
+            collected_ids
         ).fetch_all(db).await?;
 
         Ok(query_results)
@@ -178,6 +234,8 @@ impl Plugin {
         collection_id: String,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
     ) -> crate::Result<()> {
+        Collection::update_modified(&collection_id, db).await?;
+
         sqlx::query!(
             "
                 INSERT INTO plugins (
