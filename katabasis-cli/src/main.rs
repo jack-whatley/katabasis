@@ -66,6 +66,10 @@ enum CollectionCreate {
     Export {
         #[arg(long)]
         id: String
+    },
+    Import {
+        #[arg(long)]
+        path: String
     }
 }
 
@@ -131,6 +135,11 @@ async fn main() -> Result<()> {
                     let file_path = collections::export(&id).await?;
 
                     println!("Exported to: {}", file_path);
+                }
+                Some(CollectionCreate::Import { path }) => {
+                    let name = collections::import(&path).await?;
+
+                    println!("Imported Collection: '{}'", name);
                 }
             }
         }

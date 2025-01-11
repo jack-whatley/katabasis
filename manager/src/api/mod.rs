@@ -6,7 +6,11 @@ pub mod thunderstore {
 
     /// Extracts from a thunderstore URL the mod namespace and mod name.
     pub fn extract_thunderstore_url(url: &str) -> Option<(String, String)> {
-        let p_url = Url::parse(url).ok()?;
+        let mut owned_url = url.to_owned();
+
+        if !owned_url.ends_with("/") { owned_url.push_str("/"); }
+
+        let p_url = Url::parse(&owned_url).ok()?;
 
         if p_url.host_str() != Some("thunderstore.io") { return None; }
 

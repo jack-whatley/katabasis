@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::fs;
-use crate::collection::Collection;
+use crate::collection::{Collection, ExportCollection};
 use crate::storage::KbApp;
 use crate::{sanitize_file_name, setup, setup::SetupLoader, SupportedPluginSources};
 use crate::storage::plugin::{Plugin, SourceHandler};
@@ -128,4 +128,32 @@ pub async fn export(collection_id: &str) -> crate::Result<String> {
     collection.export_to_file(&export_path, &state.db_pool).await?;
 
     Ok(export_path.display().to_string())
+}
+
+pub async fn import<P: AsRef<Path>>(file_path: P) -> crate::Result<String> {
+    let import_file = fs::read(&file_path).await?;
+
+    let string_contents = String::from_utf8(import_file).map_err(|e| {
+        crate::Error::FileSystemError(
+            format!("Failed to read from file: {:?}", e)
+        )
+    })?;
+
+    let exported_collection = toml::from_str::<ExportCollection>(&string_contents).map_err(|err| {
+        crate::Error::FileSystemError(
+            format!("Failed to parse TOML file: {:?}", err)
+        )
+    })?;
+
+    let col_id = create::create(
+        format!("import_{}", exported_collection.name),
+        exported_collection.game,
+        exported_collection.game_version
+    ).await?;
+
+    for exported_plugin in exported_collection.plugins {
+        add_plugin(&col_id, exported_plugin.source, &exported_plugin.api_url).await?;
+    }
+
+    Ok(exported_collection.name)
 }

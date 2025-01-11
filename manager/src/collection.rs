@@ -31,11 +31,11 @@ struct IntermediateCollection {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ExportCollection {
-    name: String,
-    game: SupportedGames,
-    game_version: String,
-    plugins: Vec<ExportPlugin>
+pub(crate) struct ExportCollection {
+    pub name: String,
+    pub game: SupportedGames,
+    pub game_version: String,
+    pub plugins: Vec<ExportPlugin>
 }
 
 impl TryFrom<IntermediateCollection> for Collection {

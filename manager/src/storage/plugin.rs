@@ -1,9 +1,11 @@
+use std::ffi::OsStr;
 use std::fs::File;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
+use walkdir::WalkDir;
 use crate::api::thunderstore;
 use crate::collection::Collection;
 use crate::storage::dir::Directories;
@@ -121,17 +123,34 @@ impl SourceHandler for ThunderstoreHandler {
     }
 
     async fn get_plugin_file_dir(&self, plugin: &Plugin) -> crate::Result<PathBuf> {
+        // As Thunderstore doesn't use a standard layout for BepInEx files it will be instead better
+        // to just search for the directory where the .dll files are located and provide that
+
         let state = KbApp::get().await?;
 
         let collection = plugin.get_collection(&state.db_pool).await?;
 
-        let collection_dir = state.directories
+        let plugin_dir = state.directories
             .collection_plugin_dir(&collection.id)
-            .join(&plugin.name)
-            .join("BepInEx")
-            .join("plugins");
+            .join(&plugin.name);
 
-        Ok(collection_dir)
+        for entry in WalkDir::new(&plugin_dir).into_iter().filter_map(|e| e.ok()) {
+            let path = entry.path();
+
+            if path.is_file() && path.extension() == Some(OsStr::new("dll")) {
+                println!("{:#?}", path.parent().unwrap());
+
+                return Ok(path.parent().ok_or(
+                    crate::Error::FileSystemError(
+                        format!("Failed to extract parent directory of {}", plugin_dir.display())
+                    )
+                )?.to_path_buf());
+            }
+        }
+
+        Err(crate::Error::FileSystemError(
+            format!("Failed to find plugin dll files in plugin directory: '{}'", plugin_dir.display())
+        ))
     }
 }
 
@@ -145,9 +164,9 @@ pub struct Plugin {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct ExportPlugin {
-    name: String,
-    source: SupportedPluginSources,
-    api_url: String
+    pub name: String,
+    pub source: SupportedPluginSources,
+    pub api_url: String
 }
 
 impl Plugin {

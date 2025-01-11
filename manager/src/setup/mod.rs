@@ -101,6 +101,11 @@ impl SetupLoader for BepInExLoader {
             .join("BepInEx")
             .join("plugins");
 
+        // This ensures the plugin directory exists, even if BepInEx hasn't been run yet.
+        if !install_dir.exists() {
+            fs::create_dir_all(&install_dir).await?;
+        }
+
         for file in read_dir {
             let entry = file?;
             let result: crate::Result<()>;
