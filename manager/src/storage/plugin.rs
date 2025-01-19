@@ -108,14 +108,23 @@ impl SourceHandler for ThunderstoreHandler {
             download_file.write_all(&package_bytes).await?;
         }
 
-        let archive = File::open(&download_path)?;
-        let mut archive = zip::ZipArchive::new(archive)?;
+        // TODO: Find a better way to pass data to move closure
+        let clone_download_path = download_path.clone();
+        let clone_name = plugin.name.clone();
+        let clone_id = collection_id.to_string();
 
-        archive.extract(
-            state.directories
-            .collection_plugin_dir(collection_id)
-            .join(&plugin.name)
-        )?;
+        tokio::task::spawn_blocking(move || -> crate::Result<()> {
+            let archive = File::open(&clone_download_path)?;
+            let mut archive = zip::ZipArchive::new(archive)?;
+
+            archive.extract(
+                state.directories
+                    .collection_plugin_dir(&clone_id)
+                    .join(&clone_name)
+            )?;
+
+            Ok(())
+        }).await??;
 
         fs::remove_file(&download_path).await?;
 
@@ -134,12 +143,15 @@ impl SourceHandler for ThunderstoreHandler {
             .collection_plugin_dir(&collection.id)
             .join(&plugin.name);
 
+        // TODO: Should default back to BepInEx/plugins for mods without a dll (sound ones)
+        // TODO: Or if there are no folders inside do the whole folder
+        // TODO: Should also move config files to correct place
+
         for entry in WalkDir::new(&plugin_dir).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
 
-            if path.is_file() && path.extension() == Some(OsStr::new("dll")) {
-                println!("{:#?}", path.parent().unwrap());
-
+            if path.is_file()
+                && (path.extension() == Some(OsStr::new("dll")) || path.extension() == Some(OsStr::new("lethalbundle"))) {
                 return Ok(path.parent().ok_or(
                     crate::Error::FileSystemError(
                         format!("Failed to extract parent directory of {}", plugin_dir.display())
@@ -315,7 +327,7 @@ impl Plugin {
         let download_path = directories.collection_plugin_dir(collection_id).join(&self.name);
 
         if download_path.exists() {
-            fs::remove_file(download_path).await?;
+            fs::remove_dir_all(download_path).await?;
         }
 
         sqlx::query!(

@@ -35,6 +35,8 @@ pub async fn get_setup_tool(target_loader: SupportedLoaders) -> crate::Result<im
 
 pub struct BepInExLoader;
 
+const BEPINEX_IGNORE_FILES: &[&str] = &["CHANGELOG.md", "icon.png", "manifest.json", "README.md", "LICENSE.md", "LICENSE"];
+
 impl SetupLoader for BepInExLoader {
     fn is_setup<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<bool> {
         let all_files = std::fs::read_dir(target_dir.as_ref()).map_err(|e| {
@@ -108,6 +110,11 @@ impl SetupLoader for BepInExLoader {
 
         for file in read_dir {
             let entry = file?;
+
+            if BEPINEX_IGNORE_FILES.contains(&entry.file_name().to_string_lossy().as_ref()) {
+                continue;
+            }
+
             let result: crate::Result<()>;
 
             // Create symlink if file (assuming dll) else copy directories
@@ -119,7 +126,7 @@ impl SetupLoader for BepInExLoader {
             }
 
             if result.is_err() {
-                println!("Failed to create symlinks, please run this command as admin on Windows...");
+                println!("Failed to create symlinks '{}', please run this command as admin on Windows...", entry.path().display());
             }
         }
 

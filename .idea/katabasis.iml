@@ -5,6 +5,8 @@
       <sourceFolder url="file://$MODULE_DIR$/manager/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/katabasis-cli/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/cli/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/elevator/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
