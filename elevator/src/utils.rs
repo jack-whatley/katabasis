@@ -1,6 +1,9 @@
-use std::net::{TcpListener, TcpStream};
+use interprocess::local_socket::tokio::Stream;
+use interprocess::local_socket::traits::tokio::Listener;
+use interprocess::local_socket::{GenericNamespaced, ListenerOptions, ToNsName};
 use std::path::PathBuf;
-use tungstenite::Message;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::sync::mpsc;
 
 #[derive(Debug, PartialEq)]
 pub enum CommandType {
@@ -29,61 +32,101 @@ impl CommandType {
     }
 }
 
-pub fn open_listener(port: Option<u16>) -> anyhow::Result<TcpListener> {
-    let port_name = port.unwrap_or(1800);
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port_name))?;
+pub async fn open_listener() -> anyhow::Result<()> {
+    let print_name = "kb.elevator.sock";
+    let name = print_name.to_ns_name::<GenericNamespaced>()?;
 
-    Ok(listener)
-}
+    let ln_opts = ListenerOptions::new().name(name);
 
-pub fn handle_connection(stream: TcpStream) -> anyhow::Result<bool> {
-    let mut command_type;
-    let mut websocket = tungstenite::accept(stream)?;
+    let listener = match ln_opts.create_tokio() {
+        Err(err) if err.kind() == std::io::ErrorKind::AddrInUse => {
+            // In future need to clean this error up for user (luckily having admin)
+            // however for now it will be preferential to log and encourage the user
+            // to restart.
+            eprintln!("\
+                Error: Could not start the elevator server due to the socket file
+                being already occupied. Please check if {print_name} is in use, and
+                try again; if that doesn't work restarting may help.
+            ");
+
+            return Err(err.into());
+        }
+        ln => ln?,
+    };
+
+    // Channel for ending loop
+    let (tx, mut rx) = mpsc::channel::<()>(100);
 
     loop {
-        let msg = websocket.read()?;
+        let conn = match listener.accept().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                eprintln!("There was an error with an incoming connection: {e}");
+                continue;
+            }
+        };
 
-        if msg.is_text() {
-            let str_msg = msg.to_string();
+        // TODO: use a channel here to communicate if shutdown is requested
+        // then can send command via channel and break loop here. For now, it's fine to
+        // just call shutdown on process management.
 
-            match CommandType::parse(&str_msg) {
-                CommandType::EXIT => {
-                    command_type = CommandType::EXIT;
-                    break;
+        let tx_clone = tx.clone();
+
+        tokio::spawn(async move {
+            if let Err(e) = handle_connection(conn, tx_clone).await {
+                eprintln!("Error while handling connection: {e}");
+            }
+        });
+    }
+
+    Ok(())
+}
+
+async fn handle_connection(conn: Stream, sig_sender: mpsc::Sender<()>) -> anyhow::Result<()> {
+    let mut recver = BufReader::new(&conn);
+    let mut sender = &conn;
+
+    // A command length of 1024 characters should be safe due to path
+    // size limitations on Windows
+    let mut buffer = String::with_capacity(1024);
+    let _ = recver.read_line(&mut buffer).await?;
+
+    match CommandType::parse(&buffer.trim()) {
+        CommandType::SYML(target, symlink) => {
+            let target_path = PathBuf::from(&target);
+
+            if !target_path.exists() {
+                sender.write_all(b"File does not exist...\n").await?;
+            }
+            else {
+                if target_path.is_file() {
+                    tokio::task::spawn_blocking(move || {
+                        std::os::windows::fs::symlink_file(&target, &symlink)
+                    }).await??;
                 }
-                CommandType::INVALID => {
-                    command_type = CommandType::INVALID;
-
-                    println!("Received invalid command: '{}'", str_msg);
-
-                    websocket.write(
-                        Message::text("Message should use a valid command: SYML, EXIT")
-                    )?;
-                    websocket.flush()?;
+                else if target_path.is_dir() {
+                    tokio::task::spawn_blocking(move || {
+                        std::os::windows::fs::symlink_dir(&target, &symlink)
+                    }).await??;
                 }
-                CommandType::SYML(path, symlink) => {
-                    let path = PathBuf::from(path);
-                    let symlink = PathBuf::from(symlink);
-
-                    // Prefer to raise error here, instead of catch it, so exit code is non-zero
-                    if path.is_dir() {
-                        std::os::windows::fs::symlink_dir(&path, &symlink)?;
-                    }
-                    else {
-                        std::os::windows::fs::symlink_file(&path, &symlink)?;
-                    }
+                else {
+                    sender.write_all(
+                        b"Unable to create symlink for unknown file type.\n"
+                    ).await?;
                 }
             }
         }
-        else {
-            websocket.write(Message::text("Message format should be text..."))?;
-            websocket.flush()?;
+        CommandType::EXIT => {
+            sig_sender.send(()).await?;
         }
-
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        CommandType::INVALID => {
+            sender.write_all(
+                b"Provided invalid command to elevator, valid commands are: 'SYML', 'EXIT'\n"
+            ).await?;
+        }
     }
 
-    Ok(command_type == CommandType::EXIT)
+    Ok(())
 }
 
 #[cfg(test)]

@@ -4,9 +4,11 @@ use crate::opt::Opt;
 mod opt;
 mod utils;
 
-fn main() {
-    if let Err(error) = Opt::run(Opt::parse()) {
-        println!("Error: {}", error);
+#[tokio::main]
+async fn main() {
+    if let Err(error) = Opt::run(Opt::parse()).await {
+        eprintln!("{}", error);
+
         std::process::exit(1);
     }
 

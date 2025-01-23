@@ -1,3 +1,4 @@
+use std::env;
 use std::path::PathBuf;
 use crate::error;
 use tokio::fs;
@@ -88,5 +89,9 @@ impl Directories {
     #[inline]
     pub fn collection_plugin_dir(&self, collection_id: &str) -> PathBuf {
         self.collection(collection_id).join(PLUGIN_DIR)
+    }
+
+    pub fn executable_dir() -> crate::Result<PathBuf> {
+        Ok(dunce::canonicalize(env::current_dir()?)?)
     }
 }

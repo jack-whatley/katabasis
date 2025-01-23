@@ -2,7 +2,7 @@ use std::sync::Arc;
 use tokio::sync::{OnceCell, Semaphore};
 use crate::storage::dir::Directories;
 
-mod dir;
+pub mod dir;
 mod database;
 pub mod plugin;
 

@@ -1,5 +1,4 @@
 use clap::Parser;
-use crate::utils;
 
 #[derive(Parser, Debug)]
 pub struct Opt {
@@ -24,31 +23,27 @@ pub enum Command {
 }
 
 impl Opt {
-    pub fn run(opt: Opt) -> anyhow::Result<()> {
+    pub async fn run(opt: Opt) -> anyhow::Result<()> {
         match opt.command {
             Command::Symlink {
                 target,
                 symlink,
                 is_dir } => {
                 if is_dir.is_some() {
-                    std::os::windows::fs::symlink_dir(&target, &symlink)?;
+                    tokio::task::spawn_blocking(move || {
+                        std::os::windows::fs::symlink_dir(&target, &symlink)
+                    }).await??;
                 }
                 else {
-                    std::os::windows::fs::symlink_file(&target, &symlink)?;
+                    tokio::task::spawn_blocking(move || {
+                        std::os::windows::fs::symlink_file(&target, &symlink)
+                    }).await??;
                 }
             }
+            // Need to open interprocess named pipe "server" here, caller can
+            // act as the client in this case
             Command::SymlinkListener { port } => {
-                let listener = utils::open_listener(port)?;
 
-                for connection in listener.incoming() {
-                    // The idea here is to just accept one connection at a time i.e.
-                    // the handling of the connection is blocking and then returns the
-                    // next action that should be taken (either keep listening or close)
-
-                    if utils::handle_connection(connection?)? {
-                        break;
-                    }
-                }
             }
         }
 

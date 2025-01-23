@@ -107,6 +107,10 @@ impl SetupLoader for BepInExLoader {
         if !install_dir.exists() {
             fs::create_dir_all(&install_dir).await?;
         }
+        // Need to clear the plugin directory in case it exists already
+        else {
+
+        }
 
         for file in read_dir {
             let entry = file?;

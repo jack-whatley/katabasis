@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.95"
 clap = { version = "4.5.26", features = ["derive"] }
-tungstenite = "0.26.1"
+interprocess = { version = "2.2.2", features = ["tokio"] }
+tokio = { version = "1.43.0", features = ["rt-multi-thread", "sync"] }
