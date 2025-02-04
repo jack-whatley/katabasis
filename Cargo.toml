@@ -1,9 +1,7 @@
 [workspace]
 resolver = "2"
-members = [ "elevator",
-    "katabasis-cli",
-    "manager"
-]
+members = [ "gui", "katabasis-cli", "manager" ]
+exclude = [ "elevator" ]
 
 [profile.release]
 strip = true # Remove Debug Symbols
@@ -11,3 +9,9 @@ lto = true # Enable Link to Optimisations
 panic = "abort"
 codegen-units = 1
 opt-level = "s"
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
+
+[workspace.dependencies]
+tokio = "1.42.0"

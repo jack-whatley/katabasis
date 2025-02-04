@@ -1,4 +1,5 @@
 use clap::Parser;
+use crate::utils::open_listener;
 
 #[derive(Parser, Debug)]
 pub struct Opt {
@@ -16,10 +17,7 @@ pub enum Command {
         #[arg(long)]
         is_dir: Option<bool>,
     },
-    SymlinkListener {
-        #[arg(short, long)]
-        port: Option<u16>
-    }
+    SymlinkListener
 }
 
 impl Opt {
@@ -42,8 +40,8 @@ impl Opt {
             }
             // Need to open interprocess named pipe "server" here, caller can
             // act as the client in this case
-            Command::SymlinkListener { port } => {
-
+            Command::SymlinkListener => {
+                open_listener().await?;
             }
         }
 

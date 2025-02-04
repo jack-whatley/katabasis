@@ -39,6 +39,9 @@ pub enum CollectionCommand {
         id: String,
     },
     RemoveAll,
+    InstallCollection {
+        id: String,
+    }
 }
 
 #[derive(Parser, Debug)]

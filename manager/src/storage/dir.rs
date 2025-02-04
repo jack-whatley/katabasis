@@ -92,6 +92,10 @@ impl Directories {
     }
 
     pub fn executable_dir() -> crate::Result<PathBuf> {
-        Ok(dunce::canonicalize(env::current_dir()?)?)
+        Ok(dunce::canonicalize(env::current_exe()?.parent().ok_or(
+            error::Error::FileSystemError(
+                "Failed to find the executable directory".to_string()
+            )
+        )?)?)
     }
 }

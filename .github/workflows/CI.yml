@@ -10,18 +10,18 @@ env:
 jobs:
   build:
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
 
     - uses: actions/checkout@v4
 
-    - run: rustup toolchain install stable --profile minimal --no-self-update
-
     - uses: Swatinem/rust-cache@v2.7.7
       with:
         workspaces: .
 
-    - run: |
-        cargo check
-        cargo test
+    - name: Build Workspace
+      run: cargo build --verbose
+
+    - name: Test Workspace
+      run: cargo test

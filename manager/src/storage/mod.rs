@@ -11,10 +11,14 @@ static KB_STATE: OnceCell<Arc<KbApp>> = OnceCell::const_new();
 #[derive(Debug)]
 pub struct NetSemaphore(pub Semaphore);
 
+#[derive(Debug)]
+pub struct FSSemaphore(pub Semaphore);
+
 pub struct KbApp {
     pub directories: Directories,
-    pub(crate) db_pool: sqlx::SqlitePool,
-    pub(crate) net_semaphore: NetSemaphore,
+    pub db_pool: sqlx::SqlitePool,
+    pub net_semaphore: NetSemaphore,
+    pub fs_semaphore: FSSemaphore,
 }
 
 impl KbApp {
@@ -28,13 +32,15 @@ impl KbApp {
         let directories = Directories::init().await?;
 
         let net_semaphore = NetSemaphore(Semaphore::new(10));
+        let fs_semaphore = FSSemaphore(Semaphore::new(25));
 
         Ok(
             Arc::new(
                 Self {
                     directories,
                     db_pool,
-                    net_semaphore
+                    net_semaphore,
+                    fs_semaphore
                 }
             )
         )

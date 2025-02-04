@@ -1,3 +1,5 @@
+#![cfg(windows)]
+
 use clap::Parser;
 use crate::opt::Opt;
 

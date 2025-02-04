@@ -33,7 +33,7 @@ impl CommandType {
 }
 
 pub async fn open_listener() -> anyhow::Result<()> {
-    let print_name = "kb.elevator.sock";
+    let print_name = "katabasis.sock";
     let name = print_name.to_ns_name::<GenericNamespaced>()?;
 
     let ln_opts = ListenerOptions::new().name(name);
@@ -66,10 +66,6 @@ pub async fn open_listener() -> anyhow::Result<()> {
             }
         };
 
-        // TODO: use a channel here to communicate if shutdown is requested
-        // then can send command via channel and break loop here. For now, it's fine to
-        // just call shutdown on process management.
-
         let tx_clone = tx.clone();
 
         tokio::spawn(async move {
@@ -77,6 +73,16 @@ pub async fn open_listener() -> anyhow::Result<()> {
                 eprintln!("Error while handling connection: {e}");
             }
         });
+
+        match rx.try_recv() {
+            Ok(_) => {
+                // If we get a successful message then break
+                break;
+            }
+            // Probably don't want to break on either type of error
+            // as unsure if disconnect means sender being disposed
+            Err(_err) => {}
+        }
     }
 
     Ok(())

@@ -13,7 +13,11 @@ pub async fn run(opt: Opt) -> anyhow::Result<()> {
             CollectionCommand::List {
                 limit
             } => {
-                manager::collections::get_all(limit).await?;
+                let mods = manager::collections::get_all(limit).await?;
+
+                for m in mods {
+                    println!("{:#?}", m);
+                }
             },
             CollectionCommand::Remove {
                 id
@@ -21,7 +25,11 @@ pub async fn run(opt: Opt) -> anyhow::Result<()> {
                 manager::collections::remove(id).await?;
             },
             CollectionCommand::RemoveAll => { manager::collections::remove_all().await?; },
+            CollectionCommand::InstallCollection { id } => {
+                manager::collections::install(&id).await?;
+            }
         },
+        Command::Plugin(_) => {}
     }
 
     Ok(())

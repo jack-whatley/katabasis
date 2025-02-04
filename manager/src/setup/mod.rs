@@ -23,7 +23,7 @@ pub trait SetupLoader {
 
     async fn setup_game<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<()>;
 
-    async fn create_mod_symlinks<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()>;
+    async fn install_mods<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()>;
 }
 
 /// Returns the correct setup tool for the target loader
@@ -88,7 +88,7 @@ impl SetupLoader for BepInExLoader {
         Ok(())
     }
 
-    async fn create_mod_symlinks<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()> {
+    async fn install_mods<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()> {
         // Cloning this value to pass to blocking task (there is probably a better solution)
         let clone_dir = mod_dir.as_ref().to_path_buf();
 
@@ -103,14 +103,12 @@ impl SetupLoader for BepInExLoader {
             .join("BepInEx")
             .join("plugins");
 
-        // This ensures the plugin directory exists, even if BepInEx hasn't been run yet.
-        if !install_dir.exists() {
-            fs::create_dir_all(&install_dir).await?;
+        // TODO: Better solution than just deleting directory
+        if install_dir.exists() {
+            fs::remove_dir_all(&install_dir).await?;
         }
-        // Need to clear the plugin directory in case it exists already
-        else {
 
-        }
+        fs::create_dir_all(&install_dir).await?;
 
         for file in read_dir {
             let entry = file?;
@@ -119,15 +117,10 @@ impl SetupLoader for BepInExLoader {
                 continue;
             }
 
-            let result: crate::Result<()>;
-
-            // Create symlink if file (assuming dll) else copy directories
-            if entry.path().is_file() {
-                result = utils::symlink_file(entry.path(), install_dir.join(entry.file_name()));
-            }
-            else {
-                result = utils::symlink_dir(entry.path(), install_dir.join(entry.file_name()));
-            }
+            let result = crate::utils::fs::create_symlink(
+                entry.path(),
+                install_dir.join(entry.file_name())
+            ).await;
 
             if result.is_err() {
                 println!("Failed to create symlinks '{}', please run this command as admin on Windows...", entry.path().display());

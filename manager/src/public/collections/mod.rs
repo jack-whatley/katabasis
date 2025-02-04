@@ -102,7 +102,7 @@ pub async fn install(collection_id: &str) -> crate::Result<()> {
         let file_dir: PathBuf = source_handler.get_plugin_file_dir(&plugin).await?;
         let setup_loader = setup::get_setup_tool(collection.game.get_loader()).await?;
 
-        setup_loader.create_mod_symlinks(file_dir, &collection.game).await?
+        setup_loader.install_mods(file_dir, &collection.game).await?
     }
 
     Ok(())
