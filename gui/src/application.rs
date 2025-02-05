@@ -1,6 +1,6 @@
-use eframe::egui;
-use eframe::egui::{Frame, Rect, Visuals};
 use crate::notifications::NotificationPanel;
+use eframe::egui;
+use eframe::egui::{Frame, Visuals};
 
 pub struct App {
     state: AppState,

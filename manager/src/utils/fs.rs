@@ -26,3 +26,18 @@ pub async fn create_symlink<P: Into<PathBuf>, T: Into<PathBuf>>(
 
     Ok(())
 }
+
+#[cfg(unix)]
+pub async fn create_symlink<P: Into<PathBuf>, T: Into<PathBuf>>(
+    target: P,
+    symlink: T
+) -> crate::Result<()> {
+    let target = target.into();
+    let symlink = symlink.into();
+
+    tokio::task::spawn_blocking(move || {
+        std::os::unix::fs::symlink(target, symlink)
+    }).await??;
+
+    Ok(())
+}

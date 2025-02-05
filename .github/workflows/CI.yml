@@ -21,7 +21,7 @@ jobs:
         workspaces: .
 
     - name: Build Workspace
-      run: cargo build --verbose
+      run: cargo build
 
     - name: Test Workspace
       run: cargo test
