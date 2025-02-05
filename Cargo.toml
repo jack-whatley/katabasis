@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "gui", "katabasis-cli", "manager" ]
+members = [ "app/src-tauri", "katabasis-cli", "manager" ]
 exclude = [ "elevator" ]
 
 [profile.release]
