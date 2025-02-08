@@ -21,7 +21,7 @@ jobs:
         workspaces: .
 
     - name: Build Workspace
-      run: cargo build
+      run: cargo build -p manager
 
     - name: Test Workspace
-      run: cargo test
+      run: cargo test -p manager

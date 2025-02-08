@@ -1,1 +1,3 @@
-<p class="bg-red-50">Hello there...</p>
+<div class="w-full h-full bg-zinc-800 text-white p-2">
+    main content here...
+</div>
