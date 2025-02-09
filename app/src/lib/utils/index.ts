@@ -25,4 +25,13 @@ let settingsItem: SidebarItem = new SidebarItem(
     "Settings", "/settings", Icons.Settings
 );
 
-export { SidebarItem, sidebarItems, settingsItem };
+function getSubName(name: string): string {
+    let split = name.split(" ");
+    let result = "";
+
+    split.forEach((splitStr) => result += Array.from(splitStr)[0]);
+
+    return result.toUpperCase();
+}
+
+export { SidebarItem, sidebarItems, settingsItem, getSubName };

@@ -9,6 +9,16 @@ use crate::storage::plugin::{Plugin, SourceHandler};
 
 pub mod create;
 
+pub async fn get_one(id: &str) -> crate::Result<Collection> {
+    let state = KbApp::get().await?;
+
+    Collection::get(id, &state.db_pool).await?.ok_or(
+        crate::Error::SQLiteStringError(
+            format!("Failed to fetch a single collection with id: '{}'", id)
+        )
+    )
+}
+
 /// Fetches all [`Collection`]'s currently stored by the katabasis backend.
 pub async fn get_all(limit: Option<u32>) -> crate::Result<Vec<Collection>> {
     let state = KbApp::get().await?;

@@ -3,12 +3,13 @@ use crate::error::Error;
 mod error;
 
 mod storage;
-pub use storage::plugin::SupportedPluginSources;
+pub use storage::plugin::{SupportedPluginSources, Plugin};
 
 mod utils;
 pub use setup::games::*;
 
 mod collection;
+pub use collection::Collection;
 
 // Expose the public api
 mod public;

@@ -89,7 +89,7 @@ macro_rules! fetch_query {
 // The repository pattern style implementation for katabasis mod collections
 impl Collection {
     /// Fetches a [`Collection`] based on the ID provided.
-    pub async fn get(
+    pub(crate) async fn get(
         id: &str,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<Option<Self>> {
@@ -97,7 +97,7 @@ impl Collection {
     }
 
     /// Fetches a [`Collection`] per ID provided in the array.
-    pub async fn get_many(
+    pub(crate) async fn get_many(
         ids: &[&str],
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<Vec<Self>> {
@@ -115,7 +115,7 @@ impl Collection {
     }
 
     /// Fetches all the [`Collection`] structs found within the app database.
-    pub async fn get_all(
+    pub(crate) async fn get_all(
         limit: Option<u32>,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<Vec<Self>> {
@@ -135,7 +135,7 @@ impl Collection {
     }
 
     /// Inserts or updates an already existing [`Collection`] struct into the applications SQLite database.
-    pub async fn update(
+    pub(crate) async fn update(
         &self,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<()> {
@@ -172,7 +172,7 @@ impl Collection {
     }
 
     /// Removes a [`Collection`] from the database.
-    pub async fn remove(
+    pub(crate) async fn remove(
         &self,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<()> {
@@ -196,7 +196,7 @@ impl Collection {
         Ok(())
     }
 
-    pub async fn add_plugin(
+    pub(crate) async fn add_plugin(
         &self,
         plugin: &Plugin,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
@@ -207,7 +207,7 @@ impl Collection {
         ).await
     }
 
-    pub async fn update_modified(
+    pub(crate) async fn update_modified(
         id: &str,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
     ) -> crate::Result<()> {
@@ -224,7 +224,7 @@ impl Collection {
         Ok(())
     }
 
-    pub async fn export_to_file<P: AsRef<Path>>(
+    pub(crate) async fn export_to_file<P: AsRef<Path>>(
         &self,
         file_path: P,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
