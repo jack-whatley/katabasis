@@ -9,7 +9,7 @@
 
     let { children } = $props();
 
-    let notificationState = $state(true);
+    let notificationState = $state(false);
 </script>
 
 <Draggable />

@@ -20,7 +20,7 @@
     let notifications: Array<NotificationModel> = $state([
         new NotificationModel("Notification One", 
         "here is the notification body, this may be really large due to an exteme error message", 
-        NotificationLevel.Error)
+        NotificationLevel.Info)
     ]);
 </script>
 
