@@ -5,7 +5,8 @@
     import CollectionTitle from "$lib/components/CollectionTitle.svelte";
     import PluginSearch from "$lib/components/PluginSearch.svelte";
     import Icon from "$lib/icons/Icon.svelte";
-  import { Icons } from "$lib/icons";
+    import { Icons } from "$lib/icons";
+  import PluginCardList from "$lib/components/PluginCardList.svelte";
 
     let { data }: PageProps = $props();
     let defaultVal = new CollectionCardModel("", "", "", "");
@@ -17,7 +18,7 @@
     }
 
     async function getPlugins(): Promise<Array<IPlugin>> {
-        return (await invoke<Array<IPlugin>>('get_plugins', { collectionId: data.id })).slice(0, 4);
+        return await invoke<Array<IPlugin>>('get_plugins', { collectionId: data.id });
     }
 </script>
 
@@ -36,10 +37,11 @@
     {#await getPlugins()}
         <p>waiting for plugins...</p>
     {:then plugins}
-        <div class="flex flex-col w-full flex-1">
+        <PluginCardList plugins={plugins}/>
+        <!-- <div class="flex flex-col w-full flex-1">
             {#each plugins as plugin}
                 <p>{plugin.id}, {plugin.name}, {plugin.source}, {plugin.api_url}</p>
             {/each}
-        </div>
+        </div> -->
     {/await}
 </div>

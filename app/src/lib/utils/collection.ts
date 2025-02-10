@@ -12,6 +12,26 @@ interface IPlugin {
     api_url: string;
 }
 
+class Plugin implements IPlugin {
+    id: string;
+    name: string;
+    source: string;
+    api_url: string;
+    isSelected: boolean;
+
+    constructor(id: string, name: string, source: string, api_url: string) {
+        this.id = id;
+        this.name = name;
+        this.source = source;
+        this.api_url = api_url;
+        this.isSelected = false;
+    }
+}
+
+function pluginFromIPlugin(plugin: IPlugin): Plugin {
+    return new Plugin(plugin.id, plugin.name, plugin.source, plugin.api_url);
+}
+
 //     pub created: DateTime<Utc>,
 //     pub modified: DateTime<Utc>,
 //     pub last_played: Option<DateTime<Utc>>,
@@ -31,4 +51,4 @@ class CollectionCardModel implements ICollectionCardModel {
     }
 }
 
-export { type ICollectionCardModel, type IPlugin, CollectionCardModel }
+export { type ICollectionCardModel, type IPlugin, CollectionCardModel, Plugin, pluginFromIPlugin }
