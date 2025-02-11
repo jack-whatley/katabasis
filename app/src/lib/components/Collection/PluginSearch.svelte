@@ -11,5 +11,5 @@
         type="text" 
         bind:value={searchValue} 
         class="focus:outline-none flex-1"
-        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search mods..."/>
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search plugins..."/>
 </div>

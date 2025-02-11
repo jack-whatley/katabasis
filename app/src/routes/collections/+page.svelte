@@ -1,9 +1,7 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { fade } from "svelte/transition";
-
-    import CollectionCard from "$lib/components/CollectionCard.svelte";
-    import LoadingInfinite from "$lib/components/LoadingInfinite.svelte";
+    import { CollectionCard, LoadingInfinite } from "$lib/components";
     import { type ICollectionCardModel } from "$lib/utils/collection";
 
     async function fetchCollections(): Promise<Array<ICollectionCardModel>> {

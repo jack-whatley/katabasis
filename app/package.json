@@ -16,6 +16,7 @@
         "@tailwindcss/vite": "^4.0.3",
         "@tauri-apps/api": "^2.2.0",
         "@tauri-apps/plugin-opener": "^2.2.5",
+        "bits-ui": "^1.0.0-next.94",
         "tailwindcss": "^4.0.3"
     },
     "devDependencies": {

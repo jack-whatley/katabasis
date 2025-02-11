@@ -1,12 +1,9 @@
 <script lang="ts">
-    import type { PageProps } from "./$types";
+    import { type PageProps } from "./$types";
     import { invoke } from "@tauri-apps/api/core";
     import { type ICollectionCardModel, type IPlugin, CollectionCardModel } from "$lib/utils/collection";
-    import CollectionTitle from "$lib/components/CollectionTitle.svelte";
-    import PluginSearch from "$lib/components/PluginSearch.svelte";
-    import Icon from "$lib/icons/Icon.svelte";
-    import { Icons } from "$lib/icons";
-  import PluginCardList from "$lib/components/PluginCardList.svelte";
+    import { CollectionTitle, PluginSearch, PluginCardList, LoadingInfinite } from "$lib/components";
+    import { Icon, Icons } from "$lib/icons";
 
     let { data }: PageProps = $props();
     let defaultVal = new CollectionCardModel("", "", "", "");
@@ -35,13 +32,10 @@
         <PluginSearch bind:searchValue={searchVal}/>
     </div>
     {#await getPlugins()}
-        <p>waiting for plugins...</p>
+        <div class="flex-1 flex items-center justify-center">
+            <LoadingInfinite />
+        </div>
     {:then plugins}
-        <PluginCardList plugins={plugins}/>
-        <!-- <div class="flex flex-col w-full flex-1">
-            {#each plugins as plugin}
-                <p>{plugin.id}, {plugin.name}, {plugin.source}, {plugin.api_url}</p>
-            {/each}
-        </div> -->
+        <PluginCardList plugins={plugins} bind:searchValue={searchVal}/>
     {/await}
 </div>

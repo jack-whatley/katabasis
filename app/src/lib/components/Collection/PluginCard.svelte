@@ -1,7 +1,10 @@
 <script lang="ts">
     import type { IPlugin } from "$lib/utils/collection";
+    import Toggle from "../Toggle.svelte";
 
     let { plugin }: { plugin: IPlugin } = $props();
+
+    let enabled = $state(true);
 </script>
 
 <div class="w-full h-15 py-2 grid grid-cols-[min-content_4fr_3fr_2fr] gap-3 items-center px-2 odd:bg-neutral-900 group">
@@ -11,5 +14,5 @@
         <p class="text-xs">by Author</p>
     </div>
     <div><a href={plugin.api_url}>{plugin.source}</a></div>
-    <div>Actions</div>
+    <div><Toggle bind:checked={enabled}/></div>
 </div>

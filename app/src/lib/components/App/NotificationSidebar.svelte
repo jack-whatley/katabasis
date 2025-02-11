@@ -1,6 +1,6 @@
 <script lang="ts">
     import { NotificationLevel, NotificationModel } from "$lib/utils/notification";
-    import Notification from "./Notification.svelte";
+    import Notification from "../Notification.svelte";
 
     let { isOpen = $bindable(false) } = $props();
     let width = $derived(isOpen ? "w-1/3" : "w-[0px]");
