@@ -36,6 +36,6 @@
             <LoadingInfinite />
         </div>
     {:then plugins}
-        <PluginCardList plugins={plugins} bind:searchValue={searchVal}/>
+        <PluginCardList plugins={plugins} bind:searchValue={searchVal} collectionId={data.id}/>
     {/await}
 </div>

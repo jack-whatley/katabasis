@@ -34,6 +34,14 @@ async fn get_plugins(collection_id: String) -> Result<Vec<Plugin>, String> {
     }
 }
 
+#[tauri::command]
+async fn remove_plugins(collection_id: String, plugin_id: String) -> Result<(), String> {
+    match manager::collections::remove_plugin(&collection_id, &plugin_id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -43,7 +51,8 @@ pub fn run() {
             get_manager_version,
             get_collections,
             get_collection,
-            get_plugins
+            get_plugins,
+            remove_plugins
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

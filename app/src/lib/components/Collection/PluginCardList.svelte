@@ -3,7 +3,7 @@
     import PluginCard from "./PluginCard.svelte";
     import { SortButton } from "..";
 
-    let { plugins = $bindable(), searchValue = $bindable() }: { plugins: Array<IPlugin>, searchValue: string } = $props();
+    let { plugins = $bindable(), searchValue = $bindable(), collectionId }: { plugins: Array<IPlugin>, searchValue: string, collectionId: string } = $props();
 
     let nameAsc = $state(true);
     let sourceAsc = $state(true);
@@ -27,7 +27,7 @@
 </script>
 
 <div class="rounded flex-1 flex flex-col">
-    <div class="px-2 h-8 gap-3 grid grid-cols-[min-content_4fr_3fr_2fr] items-center select-none">
+    <div class="px-2 h-8 gap-3 grid grid-cols-[min-content_4fr_3fr_1fr] items-center select-none">
         <div class="size-4 bg-neutral-900 mx-2 rounded"></div>
         <SortButton bind:toggleable={nameAsc}>
             Plugin
@@ -38,10 +38,10 @@
         <div>Actions</div>
     </div>
     <div class="w-full py-1 shadow-md"></div>
-    <div class="flex flex-col flex-[1_1_0] min-h-0 overflow-y-scroll scrollbar">
+    <div class="flex flex-col flex-[1_1_0] min-h-0 overflow-y-auto scrollbar">
         <div class="border-b border-l border-t border-neutral-900 rounded">
             {#each actualList as plugin}
-                <PluginCard plugin={plugin}/>
+                <PluginCard plugin={plugin} collectionId={collectionId}/>
             {/each}
         </div>
     </div>
