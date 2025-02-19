@@ -7,7 +7,7 @@
 
     let { plugin, collectionId }: { plugin: IPlugin, collectionId: string } = $props();
 
-    let enabled = $state(true);
+    let enabled = $state(plugin.is_enabled);
 
     async function removePlugin() {
         await invoke('remove_plugins', { collectionId: collectionId, pluginId: plugin.id });
@@ -22,7 +22,9 @@
     </div>
     <div class="select-none"><a href={plugin.api_url}>{plugin.source}</a></div>
     <div class="flex flex-row gap-2 items-center justify-start">
-        <Toggle bind:checked={enabled}/>
+        <Toggle
+                bind:checked={enabled}
+                checkedCallback={async () => await invoke('switch_plugin', { pluginId: plugin.id, isEnabled: enabled })}/>
         <Button.Root 
             onclick={async () => await removePlugin()}
             class="group-odd:bg-zinc-800 group-even:bg-neutral-900 p-2 rounded hover:cursor-pointer active:scale-98 active:transition-all shadow-sm">

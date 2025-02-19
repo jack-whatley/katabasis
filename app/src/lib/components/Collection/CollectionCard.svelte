@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ICollectionCardModel } from "$lib/utils/collection";
-    import { getSubName } from "$lib/utils";
+    import { getSubName } from "$lib/utils/index";
 
     let { collection }: { collection: ICollectionCardModel } = $props();
 </script>

@@ -48,6 +48,7 @@ impl FromStr for SupportedGames {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "lethalcompany" => Ok(Self::LethalCompany),
+            "lethal-company" => Ok(Self::LethalCompany),
             "lethal company" => Ok(Self::LethalCompany),
             "lc" => Ok(Self::LethalCompany),
             _ => Err(

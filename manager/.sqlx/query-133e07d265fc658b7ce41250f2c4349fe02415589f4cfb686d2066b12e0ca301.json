@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO plugins (\n                    id, name, source, api_url, is_enabled\n                )\n                VALUES (\n                    $1, $2, $3, $4, $5\n                )\n                ON CONFLICT (id) DO UPDATE SET\n                    name = $2,\n                    source = $3,\n                    api_url = $4,\n                    is_enabled = $5\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "133e07d265fc658b7ce41250f2c4349fe02415589f4cfb686d2066b12e0ca301"
+}

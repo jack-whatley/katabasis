@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition";
 
     import type { ICollectionCardModel } from "$lib/utils/collection";
-    import { getSubName } from "$lib/utils";
+    import { getSubName } from "$lib/utils/index";
 
     let { collection, isSkeleton }: { collection: ICollectionCardModel, isSkeleton: boolean } = $props();
 

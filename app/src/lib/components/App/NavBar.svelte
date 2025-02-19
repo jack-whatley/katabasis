@@ -15,7 +15,7 @@
 </script>
 
 <div class="bg-zinc-800 w-full h-[45px] text-white flex flex-col">
-    <div class="ml-auto z-50 h-full gap-0 flex flex-row">
+    <div class="ml-auto z-60 h-full gap-0 flex flex-row">
         <NavButton isClose={false} clickCallback={minimiseApp}>
             <Icon colour="#FFFFFF" icon={Icons.Minimise}/>
         </NavButton>

@@ -16,7 +16,7 @@
 </script>
 
 <a href={url} 
-    class="flex flex-row mx-2 mt-2 p-2 gap-2 transition ease-in-out duration-75 rounded select-none hover:bg-blue-800 aria-disabled:bg-blue-800" 
+    class="flex flex-row mx-2 mt-2 p-2 items-center gap-2 transition ease-in-out duration-75 rounded select-none hover:bg-blue-800 aria-disabled:bg-blue-800" 
     aria-disabled={isDisabled}>
     {@render children()}
 </a>

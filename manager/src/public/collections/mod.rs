@@ -109,10 +109,10 @@ pub async fn install(collection_id: &str) -> crate::Result<()> {
 
     for plugin in all_plugins {
         let source_handler = plugin.source.get_handler();
-        let file_dir: PathBuf = source_handler.get_plugin_file_dir(&plugin).await?;
+        let file_dir = source_handler.get_plugin_file_dir(&plugin).await?;
         let setup_loader = setup::get_setup_tool(collection.game.get_loader()).await?;
 
-        setup_loader.install_mods(file_dir, &collection.game).await?
+        setup_loader.install_mods(&file_dir, &collection.game).await?
     }
 
     Ok(())
@@ -166,4 +166,20 @@ pub async fn import<P: AsRef<Path>>(file_path: P) -> crate::Result<String> {
     }
 
     Ok(exported_collection.name)
+}
+
+pub async fn switch_plugin(plugin_id: &str, is_enabled: bool) -> crate::Result<()> {
+    let state = KbApp::get().await?;
+
+    let mut plugin = Plugin::get(plugin_id, &state.db_pool).await?.ok_or(
+        crate::Error::SQLiteStringError(
+            format!("Plugin {} not found", plugin_id)
+        )
+    )?;
+
+    let collection_id = plugin.get_collection(&state.db_pool).await?.id;
+
+    plugin.is_enabled = is_enabled;
+
+    Ok(plugin.update(collection_id, &state.db_pool).await?)
 }

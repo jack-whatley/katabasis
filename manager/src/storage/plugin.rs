@@ -1,6 +1,7 @@
 use std::ffi::OsStr;
 use std::fs::File;
 use std::path::PathBuf;
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
@@ -33,15 +34,15 @@ impl From<String> for SupportedPluginSources {
 pub struct ThunderstoreHandler;
 
 impl SupportedPluginSources {
-    pub fn get_handler(&self) -> impl SourceHandler {
+    pub fn get_handler(&self) -> Box<impl SourceHandler + Send + Sync> {
         match self {
-            SupportedPluginSources::Thunderstore => ThunderstoreHandler
+            SupportedPluginSources::Thunderstore => Box::from(ThunderstoreHandler)
         }
     }
 }
 
 /// Trait used for handling different mod source APIs
-#[allow(async_fn_in_trait)]
+#[async_trait]
 pub trait SourceHandler {
     async fn parse_share_url(&self, url: &str) -> crate::Result<Plugin>;
 
@@ -51,6 +52,7 @@ pub trait SourceHandler {
 }
 
 /// Implementation for parsing the Thunderstore API
+#[async_trait]
 impl SourceHandler for ThunderstoreHandler {
     async fn parse_share_url(&self, url: &str) -> crate::Result<Plugin> {
         let state = KbApp::get().await?;
@@ -75,6 +77,7 @@ impl SourceHandler for ThunderstoreHandler {
             name: package.name,
             source: SupportedPluginSources::Thunderstore,
             api_url: req_url,
+            is_enabled: true,
         })
     }
 
@@ -171,7 +174,8 @@ pub struct Plugin {
     pub id: String,
     pub name: String,
     pub source: SupportedPluginSources,
-    pub api_url: String
+    pub api_url: String,
+    pub is_enabled: bool
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -249,7 +253,7 @@ impl Plugin {
         let query_results = sqlx::query_as!(
             Self,
             "
-                SELECT id, name, source, api_url
+                SELECT id, name, source, api_url, is_enabled as `is_enabled: bool`
                 FROM plugins
                 WHERE id IN (SELECT value FROM json_each($1))
             ",
@@ -267,23 +271,27 @@ impl Plugin {
     ) -> crate::Result<()> {
         Collection::update_modified(&collection_id, db).await?;
 
+        let is_enabled = self.is_enabled as i64;
+
         sqlx::query!(
             "
                 INSERT INTO plugins (
-                    id, name, source, api_url
+                    id, name, source, api_url, is_enabled
                 )
                 VALUES (
-                    $1, $2, $3, $4
+                    $1, $2, $3, $4, $5
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     name = $2,
                     source = $3,
-                    api_url = $4
+                    api_url = $4,
+                    is_enabled = $5
             ",
             self.id,
             self.name,
             self.source,
-            self.api_url
+            self.api_url,
+            is_enabled,
         ).execute(db).await?;
 
         let insert_result = sqlx::query!(
@@ -294,6 +302,7 @@ impl Plugin {
                 VALUES (
                     $1, $2
                 )
+                ON CONFLICT (collection_id, plugin_id) DO NOTHING
             ",
             collection_id,
             self.id

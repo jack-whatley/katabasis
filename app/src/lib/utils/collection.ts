@@ -10,6 +10,7 @@ interface IPlugin {
     name: string;
     source: string;
     api_url: string;
+    is_enabled: boolean;
 }
 
 class Plugin implements IPlugin {
@@ -17,14 +18,14 @@ class Plugin implements IPlugin {
     name: string;
     source: string;
     api_url: string;
-    isSelected: boolean;
+    is_enabled: boolean;
 
     constructor(id: string, name: string, source: string, api_url: string) {
         this.id = id;
         this.name = name;
         this.source = source;
         this.api_url = api_url;
-        this.isSelected = false;
+        this.is_enabled = false;
     }
 }
 

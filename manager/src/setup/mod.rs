@@ -1,12 +1,13 @@
-use std::path::Path;
-use reqwest::Method;
-use tokio::fs;
-use tokio::io::AsyncWriteExt;
 use crate::setup::utils::get_latest_bepinex;
 use crate::storage::KbApp;
-use crate::{SupportedGames, SupportedLoaders};
-use crate::SupportedLoaders::BepInEx;
 use crate::utils::download;
+use crate::SupportedLoaders::BepInEx;
+use crate::{SupportedGames, SupportedLoaders};
+use async_trait::async_trait;
+use reqwest::Method;
+use std::path::Path;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 
 /// This module contains setup code for all supported games/mod loaders
 
@@ -18,30 +19,25 @@ mod utils;
 // TODO: Should possibly swap the is_setup function to use SupportedGames enum rather than relying on the caller to provide the correct path
 
 /// Interface for handling game mod loader setup.
+#[async_trait]
 pub trait SetupLoader {
-    fn is_setup<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<bool>;
+    fn is_setup(&self, target_dir: &Path) -> crate::Result<bool>;
 
-    async fn setup_game<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<()>;
+    async fn setup_game(&self, target_dir: &Path) -> crate::Result<()>;
 
-    async fn install_mods<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()>;
-}
-
-/// Returns the correct setup tool for the target loader
-pub async fn get_setup_tool(target_loader: SupportedLoaders) -> crate::Result<impl SetupLoader> {
-    match target_loader {
-        BepInEx => Ok(BepInExLoader),
-    }
+    async fn install_mods(&self, mod_dir: &Path, game_type: &SupportedGames) -> crate::Result<()>;
 }
 
 pub struct BepInExLoader;
 
 const BEPINEX_IGNORE_FILES: &[&str] = &["CHANGELOG.md", "icon.png", "manifest.json", "README.md", "LICENSE.md", "LICENSE"];
 
+#[async_trait]
 impl SetupLoader for BepInExLoader {
-    fn is_setup<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<bool> {
-        let all_files = std::fs::read_dir(target_dir.as_ref()).map_err(|e| {
+    fn is_setup(&self, target_dir: &Path) -> crate::Result<bool> {
+        let all_files = std::fs::read_dir(target_dir).map_err(|e| {
             crate::Error::FileSystemError(
-                format!("Failed to fetch all files in directory '{:?}': {:?}", target_dir.as_ref(), e)
+                format!("Failed to fetch all files in directory '{:?}': {:?}", target_dir, e)
             )
         })?;
 
@@ -59,7 +55,7 @@ impl SetupLoader for BepInExLoader {
         Ok(true)
     }
 
-    async fn setup_game<P: AsRef<Path>>(&self, target_dir: P) -> crate::Result<()> {
+    async fn setup_game(&self, target_dir: &Path) -> crate::Result<()> {
         let state = KbApp::get().await?;
 
         let (file_name, download_url) = get_latest_bepinex(&state.net_semaphore).await?;
@@ -83,14 +79,14 @@ impl SetupLoader for BepInExLoader {
         }
 
         let mut zip = zip::ZipArchive::new(std::fs::File::open(download_path)?)?;
-        zip.extract(target_dir.as_ref())?;
+        zip.extract(target_dir)?;
 
         Ok(())
     }
 
-    async fn install_mods<P: AsRef<Path>>(&self, mod_dir: P, game_type: &SupportedGames) -> crate::Result<()> {
+    async fn install_mods(&self, mod_dir: &Path, game_type: &SupportedGames) -> crate::Result<()> {
         // Cloning this value to pass to blocking task (there is probably a better solution)
-        let clone_dir = mod_dir.as_ref().to_path_buf();
+        let clone_dir = mod_dir.to_path_buf();
 
         let read_dir = tokio::task::spawn_blocking(
             move || {
@@ -128,5 +124,14 @@ impl SetupLoader for BepInExLoader {
         }
 
         Ok(())
+    }
+}
+
+/// Returns the correct setup tool for the target loader
+pub async fn get_setup_tool(
+    target_loader: SupportedLoaders
+) -> crate::Result<Box<impl SetupLoader + Send + Sync>> {
+    match target_loader {
+        BepInEx => Ok(Box::from(BepInExLoader)),
     }
 }

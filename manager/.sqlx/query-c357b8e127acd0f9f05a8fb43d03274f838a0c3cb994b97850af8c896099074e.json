@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT id, name, source, api_url\n                FROM plugins\n                WHERE id IN (SELECT value FROM json_each($1))\n            ",
+  "query": "\n                SELECT id, name, source, api_url, is_enabled as `is_enabled: bool`\n                FROM plugins\n                WHERE id IN (SELECT value FROM json_each($1))\n            ",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,11 @@
         "name": "api_url",
         "ordinal": 3,
         "type_info": "Text"
+      },
+      {
+        "name": "is_enabled: bool",
+        "ordinal": 4,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
@@ -31,8 +36,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "d4b462eae719c5de95dd449dac54721b8c4c0932bc411eb83da762f35b33b4fb"
+  "hash": "c357b8e127acd0f9f05a8fb43d03274f838a0c3cb994b97850af8c896099074e"
 }

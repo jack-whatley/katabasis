@@ -196,17 +196,6 @@ impl Collection {
         Ok(())
     }
 
-    pub(crate) async fn add_plugin(
-        &self,
-        plugin: &Plugin,
-        db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
-    ) -> crate::Result<()> {
-        plugin.update(
-            self.id.clone(),
-            db
-        ).await
-    }
-
     pub(crate) async fn update_modified(
         id: &str,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
