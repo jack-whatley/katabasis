@@ -7,7 +7,7 @@
 
 <a class="w-64 h-24 bg-neutral-900 p-2 rounded flex flex-row gap-2 hover:bg-blue-800" 
     title={collection.name}
-    href={`/collections/${collection.id}`}>
+    href={`/collections/instance?collectionId=${collection.id}`}>
     <div class="size-20 rounded bg-zinc-800 flex items-center justify-center">
         <p class="text-xs">{getSubName(collection.name)}</p>
     </div>

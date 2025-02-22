@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { type PageProps } from "./$types";
     import { invoke } from "@tauri-apps/api/core";
+    import { page } from "$app/state";
     import { type ICollectionCardModel, type IPlugin, CollectionCardModel } from "$lib/utils/collection";
     import { CollectionTitle, PluginSearch, PluginCardList, LoadingInfinite } from "$lib/components";
     import { Icon, Icons } from "$lib/icons";
@@ -10,7 +10,8 @@
     import TextInput from "$lib/components/TextInput.svelte";
     import { Button } from "$lib/components/ui/button";
 
-    let { data }: PageProps = $props();
+    let collectionId = page.url.searchParams.get("collectionId");
+
     let defaultVal = new CollectionCardModel("", "", "", "");
 
     let searchVal = $state("");
@@ -27,11 +28,11 @@
     );
 
     async function getCollection(): Promise<ICollectionCardModel> {
-        return await invoke<ICollectionCardModel>('get_collection', { id: data.id });
+        return await invoke<ICollectionCardModel>('get_collection', { id: collectionId });
     }
 
     async function getPlugins(): Promise<Array<IPlugin>> {
-        return await invoke<Array<IPlugin>>('get_plugins', { collectionId: data.id });
+        return await invoke<Array<IPlugin>>('get_plugins', { collectionId: collectionId });
     }
 
     async function importPlugin(collectionId: string): Promise<void> {
@@ -82,6 +83,6 @@
             <LoadingInfinite />
         </div>
     {:then plugins}
-        <PluginCardList plugins={plugins} bind:searchValue={searchVal} collectionId={data.id}/>
+        <PluginCardList plugins={plugins} bind:searchValue={searchVal} collectionId={collectionId}/>
     {/await}
 </div>

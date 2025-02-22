@@ -108,6 +108,8 @@ pub async fn install(collection_id: &str) -> crate::Result<()> {
     let all_plugins = Plugin::from_collection(collection_id, &state.db_pool).await?;
 
     for plugin in all_plugins {
+        if !plugin.is_enabled { continue; }
+        
         let source_handler = plugin.source.get_handler();
         let file_dir = source_handler.get_plugin_file_dir(&plugin).await?;
         let setup_loader = setup::get_setup_tool(collection.game.get_loader()).await?;

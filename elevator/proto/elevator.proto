@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package elevator;
+
+service Elevator {
+  rpc CreateSymlink (SymlinkRequest) returns (SymlinkReply);
+
+  rpc ShutdownApplication (ShutdownRequest) returns (ShutdownReply);
+}
+
+message SymlinkRequest {
+  string target = 1;
+  string symlink = 2;
+}
+
+message SymlinkReply {}
+
+message ShutdownRequest {}
+
+message ShutdownReply {}

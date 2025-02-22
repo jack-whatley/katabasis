@@ -75,6 +75,14 @@ async fn switch_plugin(plugin_id: String, is_enabled: bool) -> Result<(), String
     }
 }
 
+#[tauri::command]
+async fn install_collection(collection_id: String) -> Result<(), String> {
+    match manager::collections::install(&collection_id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -88,7 +96,8 @@ pub fn run() {
             remove_plugins,
             create_collection,
             import_plugin,
-            switch_plugin
+            switch_plugin,
+            install_collection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

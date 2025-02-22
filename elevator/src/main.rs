@@ -1,18 +1,20 @@
 #![cfg(windows)]
 
-use clap::Parser;
-use crate::opt::Opt;
+use crate::elevator::elevator_proto::elevator_server::ElevatorServer;
+use crate::elevator::Server;
 
-mod opt;
-mod utils;
+mod elevator;
+mod symlink;
 
 #[tokio::main]
-async fn main() {
-    if let Err(error) = Opt::run(Opt::parse()).await {
-        eprintln!("{}", error);
+async fn main() -> anyhow::Result<()> {
+    let address = "[::1]:50051".parse()?;
+    let server = Server::default();
 
-        std::process::exit(1);
-    }
+    tonic::transport::Server::builder()
+        .add_service(ElevatorServer::new(server))
+        .serve(address)
+        .await?;
 
-    std::process::exit(0);
+    Ok(())
 }

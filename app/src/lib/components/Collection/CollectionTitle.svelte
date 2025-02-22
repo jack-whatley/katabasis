@@ -3,10 +3,24 @@
 
     import type { ICollectionCardModel } from "$lib/utils/collection";
     import { getSubName } from "$lib/utils/index";
+    import {invoke} from "@tauri-apps/api/core";
 
     let { collection, isSkeleton }: { collection: ICollectionCardModel, isSkeleton: boolean } = $props();
 
-    let isActivateDisabled = $state(true);
+    let isActivateDisabled = $state(false);
+
+    async function installCollection() {
+        try {
+            isActivateDisabled = true;
+            await invoke('install_collection', { collectionId: collection.id });
+        }
+        catch (err) {
+            console.error(err);
+        }
+        finally {
+            isActivateDisabled = false;
+        }
+    }
 </script>
 
 <div class="w-full bg-neutral-900 rounded p-2 flex flex-row gap-2 select-none" transition:fade>
@@ -32,7 +46,8 @@
     <div class="flex flex-row justify-end items-start flex-1">
         <button class="px-3 py-2 rounded bg-blue-800 transition-all duration-150 hover:cursor-pointer hover:bg-blue-600
             disabled:bg-blue-900 disabled:cursor-not-allowed focus:outline-none"
-            disabled={isActivateDisabled}>
+            disabled={isActivateDisabled}
+            onclick={installCollection}>
             Activate
         </button>
     </div>

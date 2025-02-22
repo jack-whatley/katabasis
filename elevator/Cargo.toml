@@ -4,7 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.95"
-clap = { version = "4.5.26", features = ["derive"] }
-interprocess = { version = "2.2.2", features = ["tokio"] }
 tokio = { version = "1.43.0", features = ["rt-multi-thread", "sync", "macros"] }
+tonic = "0.12"
+prost = "0.13"
+anyhow = "1.0.96"
+
+[build-dependencies]
+tonic-build = "0.12"
+
+[features]
+winAdmin = []
