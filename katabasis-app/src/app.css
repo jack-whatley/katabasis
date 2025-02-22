@@ -62,3 +62,29 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+
+@layer utilities {
+  /* .scrollbar {
+      scrollbar-width: thin;
+  } */
+
+  .scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+    background: #171717;
+    padding: 1px;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 100vh;
+    background: #404040;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #404040;
+  }
+}

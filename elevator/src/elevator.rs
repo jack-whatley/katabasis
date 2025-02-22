@@ -1,15 +1,24 @@
 use std::path::PathBuf;
+use tokio::sync::mpsc::Sender;
 use tonic::{Request, Response, Status};
 use elevator_proto::elevator_server::Elevator;
-use crate::elevator::elevator_proto::{SymlinkReply, SymlinkRequest};
+use crate::elevator::elevator_proto::{SymlinkReply, SymlinkRequest, ShutdownRequest, ShutdownResponse};
 use crate::symlink;
 
 pub mod elevator_proto {
     tonic::include_proto!("elevator");
 }
 
-#[derive(Debug, Default)]
-pub struct Server {}
+#[derive(Debug)]
+pub struct Server {
+    shutdown_sender: Sender<()>,
+}
+
+impl Server {
+    pub fn init(shutdown_sender: Sender<()>) -> Server {
+        Server { shutdown_sender }
+    }
+}
 
 #[tonic::async_trait]
 impl Elevator for Server {
@@ -24,7 +33,17 @@ impl Elevator for Server {
 
         match symlink::create(target_path, sym_path).await {
             Ok(_) => Ok(Response::new(SymlinkReply{})),
-            Err(e) => Err(Status::invalid_argument(e.to_string()))
+            Err(e) => Err(Status::unknown(e.to_string()))
+        }
+    }
+
+    async fn shutdown_tool(
+        &self,
+        _request: Request<ShutdownRequest>,
+    ) -> Result<Response<ShutdownResponse>, Status> {
+        match &self.shutdown_sender.send(()).await {
+            Ok(_) => Ok(Response::new(ShutdownResponse {})),
+            Err(_) => Err(Status::internal("Error sending shutdown signal")),
         }
     }
 }

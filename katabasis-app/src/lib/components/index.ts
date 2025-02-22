@@ -7,7 +7,7 @@ import Separator from "./Separator.svelte";
 import SortButton from "./SortButton.svelte";
 
 export {
-    // app components
+    // katabasis-app components
     AppTitle, Draggable, NavBar, NavButton, NotificationSidebar, Sidebar, SidebarButton,
 
     // collection components

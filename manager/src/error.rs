@@ -38,6 +38,12 @@ pub enum Error {
 
     #[error("Export Serialisation Error: {0}")]
     ExportSerialisationError(#[from] toml::ser::Error),
+
+    #[error("Grpc Error: {0}")]
+    GrpcError(#[from] tonic::transport::Error),
+    
+    #[error("Symlink Tool Error: {0}")]
+    SymlinkToolError(String),
 }
 
 // impl<E: Into<Error>> From<E> for Error {

@@ -153,8 +153,7 @@ impl SourceHandler for ThunderstoreHandler {
         for entry in WalkDir::new(&plugin_dir).into_iter().filter_map(|e| e.ok()) {
             let path = entry.path();
 
-            if path.is_file()
-                && (path.extension() == Some(OsStr::new("dll")) || path.extension() == Some(OsStr::new("lethalbundle"))) {
+            if path.is_file() && (path.extension() == Some(OsStr::new("dll"))) {
                 return Ok(path.parent().ok_or(
                     crate::Error::FileSystemError(
                         format!("Failed to extract parent directory of {}", plugin_dir.display())

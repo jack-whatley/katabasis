@@ -4,8 +4,9 @@ use crate::collection::{Collection, ExportCollection};
 use crate::storage::KbApp;
 use crate::{sanitize_file_name, setup, setup::SetupLoader, SupportedPluginSources};
 use crate::storage::plugin::{Plugin, SourceHandler};
+use crate::utils::fs::SymlinkTool;
 
-/// Public collections API for CRUD operations on the app collections.
+/// Public collections API for CRUD operations on the katabasis-app collections.
 
 pub mod create;
 
@@ -107,15 +108,36 @@ pub async fn install(collection_id: &str) -> crate::Result<()> {
 
     let all_plugins = Plugin::from_collection(collection_id, &state.db_pool).await?;
 
+    let install_dir = collection.game
+        .get_game_dir()?
+        .join("BepInEx")
+        .join("plugins");
+
+    // TODO: Find better solution to removing install dir...
+    if install_dir.exists() {
+        fs::remove_dir_all(&install_dir).await?;
+    }
+
+    fs::create_dir_all(&install_dir).await?;
+
+    let mut symlink_tool = SymlinkTool::init().await?;
+
     for plugin in all_plugins {
         if !plugin.is_enabled { continue; }
         
         let source_handler = plugin.source.get_handler();
-        let file_dir = source_handler.get_plugin_file_dir(&plugin).await?;
+
+        let file_dir = match source_handler.get_plugin_file_dir(&plugin).await {
+            Ok(file_dir) => file_dir,
+            Err(_) => continue,
+        };
+
         let setup_loader = setup::get_setup_tool(collection.game.get_loader()).await?;
 
-        setup_loader.install_mods(&file_dir, &collection.game).await?
+        setup_loader.install_mod(&file_dir, &collection.game, &mut symlink_tool).await?
     }
+
+    symlink_tool.terminate().await?;
 
     Ok(())
 }
@@ -158,7 +180,7 @@ pub async fn import<P: AsRef<Path>>(file_path: P) -> crate::Result<String> {
     })?;
 
     let col_id = create::create(
-        format!("import_{}", exported_collection.name),
+        exported_collection.name.clone(),
         exported_collection.game,
         exported_collection.game_version
     ).await?;

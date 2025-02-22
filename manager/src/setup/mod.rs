@@ -8,6 +8,7 @@ use reqwest::Method;
 use std::path::Path;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
+use crate::utils::fs::SymlinkTool;
 
 /// This module contains setup code for all supported games/mod loaders
 
@@ -25,7 +26,7 @@ pub trait SetupLoader {
 
     async fn setup_game(&self, target_dir: &Path) -> crate::Result<()>;
 
-    async fn install_mods(&self, mod_dir: &Path, game_type: &SupportedGames) -> crate::Result<()>;
+    async fn install_mod(&self, mod_dir: &Path, game_type: &SupportedGames, symlink_tool: &mut SymlinkTool) -> crate::Result<()>;
 }
 
 pub struct BepInExLoader;
@@ -84,7 +85,7 @@ impl SetupLoader for BepInExLoader {
         Ok(())
     }
 
-    async fn install_mods(&self, mod_dir: &Path, game_type: &SupportedGames) -> crate::Result<()> {
+    async fn install_mod(&self, mod_dir: &Path, game_type: &SupportedGames, symlink_tool: &mut SymlinkTool) -> crate::Result<()> {
         // Cloning this value to pass to blocking task (there is probably a better solution)
         let clone_dir = mod_dir.to_path_buf();
 
@@ -99,13 +100,6 @@ impl SetupLoader for BepInExLoader {
             .join("BepInEx")
             .join("plugins");
 
-        // TODO: Better solution than just deleting directory
-        if install_dir.exists() {
-            fs::remove_dir_all(&install_dir).await?;
-        }
-
-        fs::create_dir_all(&install_dir).await?;
-
         for file in read_dir {
             let entry = file?;
 
@@ -113,9 +107,9 @@ impl SetupLoader for BepInExLoader {
                 continue;
             }
 
-            let result = crate::utils::fs::create_symlink(
-                entry.path(),
-                install_dir.join(entry.file_name())
+            let result = symlink_tool.create_symlink(
+                entry.path().display().to_string(),
+                install_dir.join(entry.file_name()).display().to_string(),
             ).await;
 
             if result.is_err() {

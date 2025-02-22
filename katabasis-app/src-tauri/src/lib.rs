@@ -57,7 +57,7 @@ async fn create_collection(name: String, game: String) -> Result<(), String> {
 async fn import_plugin(
     collection_id: String,
     plugin_source: String,
-    plugin_url: String
+    plugin_url: String,
 ) -> Result<(), String> {
     let parsed_source = SupportedPluginSources::from(plugin_source);
 
@@ -83,9 +83,18 @@ async fn install_collection(collection_id: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+async fn import_collection(file_path: String) -> Result<(), String> {
+    match manager::collections::import(file_path).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_version,
@@ -97,7 +106,8 @@ pub fn run() {
             create_collection,
             import_plugin,
             switch_plugin,
-            install_collection
+            install_collection,
+            import_collection
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

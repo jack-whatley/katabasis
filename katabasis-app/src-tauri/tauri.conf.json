@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "app",
+    "productName": "katabasis-app",
     "version": "0.1.0",
     "identifier": "dev.jackwhatley.katabasis",
     "build": {
@@ -31,6 +31,12 @@
             "icons/128x128@2x.png",
             "icons/icon.icns",
             "icons/icon.ico"
-        ]
+        ],
+        "windows": {
+            "wix": {
+                "fragmentPaths": ["./windows/fragments/elevator.wxs"],
+                "componentRefs": ["ElevatorToolExecutable"]
+            }
+        }
     }
 }

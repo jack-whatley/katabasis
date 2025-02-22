@@ -5,7 +5,7 @@ package elevator;
 service Elevator {
   rpc CreateSymlink (SymlinkRequest) returns (SymlinkReply);
 
-  rpc ShutdownApplication (ShutdownRequest) returns (ShutdownReply);
+  rpc ShutdownTool (ShutdownRequest) returns (ShutdownResponse);
 }
 
 message SymlinkRequest {
@@ -17,4 +17,4 @@ message SymlinkReply {}
 
 message ShutdownRequest {}
 
-message ShutdownReply {}
+message ShutdownResponse {}

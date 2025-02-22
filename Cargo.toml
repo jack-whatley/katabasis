@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = [ "app/src-tauri", "katabasis-cli", "manager", "elevator" ]
+members = ["katabasis-app/src-tauri", "katabasis-cli", "manager", "elevator" ]
 
 [profile.release]
 strip = true # Remove Debug Symbols

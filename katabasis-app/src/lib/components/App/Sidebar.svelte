@@ -6,6 +6,7 @@
     import { Icon } from "$lib/icons";
 
     import StackPlus from "phosphor-svelte/lib/StackPlus";
+    import FilePlus from "phosphor-svelte/lib/FilePlus";
 
     import Dialogue from "../Dialogue.svelte";
     import TextInput from "../TextInput.svelte";
@@ -13,7 +14,8 @@
     import * as Select from "$lib/components/ui/select/index";
     import * as Tabs from "$lib/components/ui/tabs";
     import { Button } from "$lib/components/ui/button/index"
-    import {invoke} from "@tauri-apps/api/core";
+    import { invoke } from "@tauri-apps/api/core";
+    import { open } from "@tauri-apps/plugin-dialog";
 
     let games = [
         { value: "lethal-company", label: "Lethal Company" }
@@ -22,12 +24,33 @@
     let collectionName = $state("");
     let selectedGame = $state("");
 
+    let collectionPath = $state("");
+
+    let canImport = $state(true);
+
     const dropdownLabel = $derived(
         games.find((f) => f.value === selectedGame)?.label ?? "Select a game..."
     );
 
     async function createCollection() {
         await invoke("create_collection", { name: collectionName, game: selectedGame });
+    }
+
+    async function getCollectionPath() {
+        collectionPath = await open({ directory: false, multiple: false }) ?? "";
+    }
+
+    async function importCollection() {
+        try {
+            canImport = false;
+            await invoke('import_collection', { filePath: collectionPath });
+        }
+        catch (error) {
+            console.error(error);
+        }
+        finally {
+            canImport = true;
+        }
     }
 </script>
 
@@ -55,7 +78,21 @@
 {/snippet}
 
 {#snippet importTab()}
-    <div>import tab</div>
+    <div class="select-none flex flex-col p-1">
+        <p class="text-lg">Import Collection</p>
+        <p class="text-sm mt-2 mb-1">File Path</p>
+        <div class="flex flex-row gap-1">
+            <TextInput bind:value={collectionPath} class="w-full" />
+            <Button variant="default"
+                    onclick={async () => await getCollectionPath()}>
+                <FilePlus />
+            </Button>
+        </div>
+        <Button variant="default" class="ml-auto w-26 mt-2"
+            disabled={!canImport} onclick={async () => await importCollection()}>
+            Import
+        </Button>
+    </div>
 {/snippet}
 
 <div class="text-white min-w-1/6 bg-neutral-900 flex flex-col">
@@ -66,7 +103,7 @@
             <p>{item.display}</p>
         </SidebarButton>
     {/each}
-    <div class="mt-auto w-full flex">
+    <div class="mt-auto mb-2 w-full flex">
         <Dialogue title="Create Collection" class="w-full h-min mx-2 mt-2">
             {#snippet button()}
                 <div class="flex flex-row flex-1 p-2 items-center gap-2 transition ease-in-out duration-75 rounded select-none hover:bg-emerald-800 hover:cursor-pointer">
@@ -90,10 +127,10 @@
             {/snippet}
         </Dialogue>
     </div>
-    <div class="mb-2 w-full">
-        <SidebarButton url={settingsItem.url}>
-            <Icon colour="#FFFFFF" icon={settingsItem.icon}/>
-            <p>{settingsItem.display}</p>
-        </SidebarButton>
-    </div>
+<!--    <div class="mb-2 w-full">-->
+<!--        <SidebarButton url={settingsItem.url}>-->
+<!--            <Icon colour="#FFFFFF" icon={settingsItem.icon}/>-->
+<!--            <p>{settingsItem.display}</p>-->
+<!--        </SidebarButton>-->
+<!--    </div>-->
 </div>

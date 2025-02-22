@@ -12,14 +12,14 @@ pub(crate) const DB_NAME: &'static str = "katabasis.db";
 pub(crate) async fn connect() -> crate::Result<Pool<Sqlite>> {
     let app_dir = Directories::get_default_dir().ok_or(
         error::Error::FileSystemError(
-            "Failed to find app directory".to_string()
+            "Failed to find katabasis-app directory".to_string()
         )
     )?;
 
     if !app_dir.exists() {
         fs::create_dir_all(&app_dir).await.map_err(|err| {
             error::Error::FileSystemError(
-                format!("Failed to create app directory: {}", err)
+                format!("Failed to create katabasis-app directory: {}", err)
             )
         })?;
     }

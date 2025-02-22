@@ -114,7 +114,7 @@ impl Collection {
             .collect::<crate::Result<Vec<_>>>()
     }
 
-    /// Fetches all the [`Collection`] structs found within the app database.
+    /// Fetches all the [`Collection`] structs found within the katabasis-app database.
     pub(crate) async fn get_all(
         limit: Option<u32>,
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>

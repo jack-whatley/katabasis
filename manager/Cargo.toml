@@ -23,3 +23,8 @@ toml = "0.8.19"
 walkdir = "2.5.0"
 url = "2.5.4"
 async-trait = "0.1.86"
+tonic = "0.12"
+prost = "0.13"
+
+[build-dependencies]
+tonic-build = "0.12"
