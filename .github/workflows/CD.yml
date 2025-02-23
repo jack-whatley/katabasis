@@ -20,6 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: view the secrets context
+        run: echo "%SECRETS_CONTEXT%"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+
       - name: Enable Corepack
         run: |
           corepack enable
