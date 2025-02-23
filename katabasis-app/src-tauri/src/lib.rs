@@ -97,7 +97,6 @@ pub fn run() {
     tauri::Builder::default()
         .setup(
             |app| {
-                #[cfg(desktop)]
                 app.handle().plugin(tauri_plugin_updater::Builder::new().build())
                     .expect("Failed to initialise updater");
 
