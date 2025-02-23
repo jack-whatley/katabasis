@@ -27,6 +27,7 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        working-directory: ./katabasis-app
         with:
           node-version: lts/*
           cache: yarn
