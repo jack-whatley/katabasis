@@ -28,7 +28,7 @@ impl KbApp {
     }
 
     async fn initialise_kb_state() -> crate::Result<Arc<KbApp>> {
-        let db_pool = database::connect().await?;
+        let db_pool = database::connect(0u8).await?;
         let directories = Directories::init().await?;
 
         let net_semaphore = NetSemaphore(Semaphore::new(10));

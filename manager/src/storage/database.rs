@@ -9,7 +9,7 @@ use crate::error;
 
 pub(crate) const DB_NAME: &'static str = "katabasis.db";
 
-pub(crate) async fn connect() -> crate::Result<Pool<Sqlite>> {
+pub(crate) async fn connect(mut level: u8) -> crate::Result<Pool<Sqlite>> {
     let app_dir = Directories::get_default_dir().ok_or(
         error::Error::FileSystemError(
             "Failed to find katabasis-app directory".to_string()
@@ -40,7 +40,25 @@ pub(crate) async fn connect() -> crate::Result<Pool<Sqlite>> {
         .connect_with(sql_options)
         .await?;
 
-    sqlx::migrate!().run(&sql_pool).await?;
+    match sqlx::migrate!().run(&sql_pool).await {
+        Ok(_) => {},
+        Err(err) => {
+            println!("Failed to migrate database, retrying: x{}", level);
+
+            sql_pool.close().await;
+
+            if level >= 5 {
+                return Err(err.into());
+            }
+
+            // Remove old database, increment and rerun
+            fs::remove_file(&app_dir.join(DB_NAME)).await?;
+
+            level += 1u8;
+
+            return Ok(Box::pin(connect(level)).await?);
+        }
+    }
 
     Ok(sql_pool)
 }
