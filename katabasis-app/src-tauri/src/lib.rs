@@ -1,3 +1,4 @@
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_updater::UpdaterExt;
 use manager::{Collection, Plugin, SupportedGames, SupportedPluginSources};
 
@@ -97,19 +98,21 @@ pub fn run() {
     tauri::Builder::default()
         .setup(
             |app| {
+                app.handle().plugin(tauri_plugin_dialog::init())
+                    .expect("Failed to initialise dialog");
+
                 app.handle().plugin(tauri_plugin_updater::Builder::new().build())
                     .expect("Failed to initialise updater");
 
                 let handle = app.handle().clone();
 
                 tauri::async_runtime::spawn(async move {
-                    update(handle).await.unwrap();
+                    update(handle).await
                 });
 
                 Ok(())
             }
         )
-        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_version,
@@ -132,18 +135,30 @@ async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
     if let Some(update) = app.updater()?.check().await? {
         let mut downloaded = 0;
 
-        update.download_and_install(
-            |chunk_length, content_length| {
-                downloaded += chunk_length;
-                println!("downloaded {downloaded} from {content_length:?}");
-            },
-            || {
-                println!("download finished");
-            }
-        ).await?;
+        let do_update: bool = app.dialog()
+            .message(format!("There is a new release, version: '{:?}'. Do you wish to update now?", update.version))
+            .buttons(MessageDialogButtons::OkCancelCustom("Yes".to_string(), "No".to_string()))
+            .title("Application Update Detected")
+            .blocking_show();
 
-        println!("update installed");
-        app.restart();
+        if do_update {
+            update.download_and_install(
+                |chunk_length, _content_length| {
+                    downloaded += chunk_length;
+                },
+                || {
+                    println!("download finished");
+                }
+            ).await?;
+
+            let _message = app.dialog()
+                .message("The application has successfully updated. It will now restart...")
+                .kind(MessageDialogKind::Info)
+                .title("Application Update Complete")
+                .blocking_show();
+
+            app.restart();
+        }
     }
 
     Ok(())
