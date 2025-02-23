@@ -28,7 +28,6 @@ jobs:
           yarn set version stable
 
       - name: Setup Node.js
-        working-directory: ./katabasis-app
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
