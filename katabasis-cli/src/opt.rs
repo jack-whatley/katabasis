@@ -41,6 +41,9 @@ pub enum CollectionCommand {
     RemoveAll,
     InstallCollection {
         id: String,
+    },
+    Export {
+        id: String,
     }
 }
 

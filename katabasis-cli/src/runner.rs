@@ -27,6 +27,9 @@ pub async fn run(opt: Opt) -> anyhow::Result<()> {
             CollectionCommand::RemoveAll => { manager::collections::remove_all().await?; },
             CollectionCommand::InstallCollection { id } => {
                 manager::collections::install(&id).await?;
+            },
+            CollectionCommand::Export { id } => {
+                manager::collections::export(&id).await?;
             }
         },
         Command::Plugin(_) => {}

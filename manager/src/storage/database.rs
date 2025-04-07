@@ -24,7 +24,14 @@ pub(crate) async fn connect(mut level: u8) -> crate::Result<Pool<Sqlite>> {
         })?;
     }
 
-    let db_uri = format!("sqlite:{}", app_dir.join(DB_NAME).display());
+    let mut db_path = app_dir.join(DB_NAME).display().to_string();
+
+    #[cfg(debug_assertions)]
+    {
+        db_path = db_path.replace(".db", "_dev.db");
+    }
+
+    let db_uri = format!("sqlite:{}", db_path);
 
     if !Sqlite::database_exists(&db_uri).await? {
         Sqlite::create_database(&db_uri).await?;

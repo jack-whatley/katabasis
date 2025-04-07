@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["katabasis-app/src-tauri", "katabasis-cli", "manager", "elevator" ]
+members = ["katabasis-app/src-tauri", "katabasis-cli", "manager", "elevator" , "manager-core"]
 
 [profile.release]
 strip = true # Remove Debug Symbols
@@ -14,3 +14,4 @@ opt-level = 3
 
 [workspace.dependencies]
 tokio = "1.42.0"
+log = "0.4.27"
