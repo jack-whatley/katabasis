@@ -18,6 +18,12 @@ pub enum KatabasisErrorKind {
 
     #[error("DB Migration Error: {0}")]
     DBMigrationError(#[from] MigrateError),
+
+    #[error("HTTP General Error: {0}")]
+    HttpGeneralError(String),
+    
+    #[error("Managed Property Error: {0}")]
+    InvalidManagedProperty(String),
 }
 
 #[derive(Debug)]

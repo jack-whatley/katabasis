@@ -43,7 +43,9 @@ impl Directories {
         for path in APPLICATION_DIRECTORIES {
             let full_path = working_dir.join(path);
 
-            fs::create_dir(full_path, false).await?;
+            if !full_path.exists() {
+                fs::create_dir(full_path, false).await?;
+            }
         }
 
         Ok(Self { working_dir })

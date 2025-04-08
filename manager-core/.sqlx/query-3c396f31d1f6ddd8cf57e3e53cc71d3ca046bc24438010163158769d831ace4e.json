@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT id, name, game, game_version, created, modified, last_played\n            FROM collections\n            LIMIT $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "game",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "game_version",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "created",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "modified",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_played",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "3c396f31d1f6ddd8cf57e3e53cc71d3ca046bc24438010163158769d831ace4e"
+}

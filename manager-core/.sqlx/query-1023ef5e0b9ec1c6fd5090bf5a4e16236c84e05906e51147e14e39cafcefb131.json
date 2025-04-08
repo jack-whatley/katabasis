@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE settings\n            SET download_limit = $1, file_limit = $2\n            WHERE id = $3\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "1023ef5e0b9ec1c6fd5090bf5a4e16236c84e05906e51147e14e39cafcefb131"
+}

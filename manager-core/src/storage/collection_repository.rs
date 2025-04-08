@@ -99,14 +99,11 @@ pub async fn remove(
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-    use std::time::Duration;
-    use chrono::Utc;
-    use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
-    use sqlx::SqlitePool;
-    use crate::data::Collection;
+    use super::{get, get_all, upsert};
     use crate::data::support::Game;
-    use super::{upsert, get, get_all};
+    use crate::data::Collection;
+    use crate::storage::initialise_database;
+    use chrono::Utc;
 
     fn test_collection(id: Option<String>) -> Collection {
         Collection {
@@ -118,24 +115,6 @@ mod tests {
             modified: Utc::now(),
             last_played: None,
         }
-    }
-
-    async fn initialise_database() -> SqlitePool {
-        let sql_options = SqliteConnectOptions::from_str("sqlite::memory:")
-            .unwrap()
-            .busy_timeout(Duration::from_secs(30))
-            .journal_mode(SqliteJournalMode::Wal)
-            .optimize_on_close(true, None);
-
-        let pool = SqlitePoolOptions::new()
-            .max_connections(100)
-            .connect_with(sql_options)
-            .await
-            .unwrap();
-
-        sqlx::migrate!().run(&pool).await.unwrap();
-
-        pool
     }
 
     #[tokio::test]
