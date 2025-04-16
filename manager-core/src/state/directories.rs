@@ -3,7 +3,7 @@ use log::error;
 use crate::error;
 use crate::utils::fs;
 
-const APPLICATION_DIRECTORIES: &[&str] = &["collections", "downloads", "loaders"];
+const APPLICATION_DIRECTORIES: &[&str] = &["collections", "downloads"];
 
 pub struct Directories {
     pub working_dir: PathBuf,
@@ -64,10 +64,5 @@ impl Directories {
     #[inline]
     pub fn download_dir(&self) -> PathBuf {
         self.working_dir.join("downloads")
-    }
-
-    #[inline]
-    pub fn loaders_dir(&self) -> PathBuf {
-        self.working_dir.join("loaders")
     }
 }

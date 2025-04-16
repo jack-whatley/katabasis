@@ -1,6 +1,6 @@
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use crate::data::support::{Game, Source};
+use crate::data::support::{PluginTarget, PluginSource};
 use crate::error;
 
 pub mod support;
@@ -9,7 +9,7 @@ pub mod support;
 pub struct Collection {
     pub id: String,
     pub name: String,
-    pub game: Game,
+    pub game: PluginTarget,
     pub game_version: String,
     pub created: DateTime<Utc>,
     pub modified: DateTime<Utc>,
@@ -29,7 +29,7 @@ impl PartialEq for Collection {
 pub struct Plugin {
     pub id: String,
     pub name: String,
-    pub source: Source,
+    pub source: PluginSource,
     pub api_url: String,
     pub version: String,
     pub is_enabled: bool
@@ -38,7 +38,7 @@ pub struct Plugin {
 pub(crate) struct IntermediateCollection {
     pub id: String,
     pub name: String,
-    pub game: Game,
+    pub game: PluginTarget,
     pub game_version: String,
     pub created: i64,
     pub modified: i64,

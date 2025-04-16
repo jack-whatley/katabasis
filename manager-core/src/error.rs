@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 use sqlx::migrate::MigrateError;
 use tracing_error::InstrumentError;
+use crate::utils::net::HttpError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum KatabasisErrorKind {
@@ -24,6 +25,9 @@ pub enum KatabasisErrorKind {
     
     #[error("Managed Property Error: {0}")]
     InvalidManagedProperty(String),
+
+    #[error("Http Error: {0}")]
+    HttpError(#[from] HttpError),
 }
 
 #[derive(Debug)]

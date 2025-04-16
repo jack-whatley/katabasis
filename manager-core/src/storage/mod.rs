@@ -46,6 +46,7 @@ pub(crate) async fn connect_database(database_directory: impl AsRef<Path>) -> er
 }
 
 /// Initialise a testing in-memory database.
+#[allow(dead_code)]
 pub(crate) async fn initialise_database() -> SqlitePool {
     let sql_options = SqliteConnectOptions::from_str("sqlite::memory:")
         .unwrap()

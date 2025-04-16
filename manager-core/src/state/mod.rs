@@ -1,11 +1,13 @@
 use crate::{error, storage};
 use crate::state::directories::Directories;
 use std::sync::Arc;
-use log::{error, info};
+use log::{error, info, warn};
 use tokio::sync::{OnceCell, Semaphore};
-use crate::utils::NetSemaphore;
+use crate::storage::settings_repository;
+use crate::storage::settings_repository::ApplicationSettings;
+use crate::utils::{cleanup_collections, migration_functions, NetSemaphore};
 
-mod directories;
+pub mod directories;
 
 static KATABASIS_APPLICATION: OnceCell<Arc<KatabasisApp>> = OnceCell::const_new();
 
@@ -15,12 +17,21 @@ pub struct KatabasisApp {
     pub db_pool: sqlx::SqlitePool,
     pub http_client: reqwest::Client,
     pub net_semaphore: NetSemaphore,
+    pub settings: ApplicationSettings,
 }
 
 impl KatabasisApp {
     /// Fetches or lazily initialises the application state asynchronously.
     pub async fn get() -> error::KatabasisResult<Arc<Self>> {
-        Ok(Arc::clone(KATABASIS_APPLICATION.get_or_try_init(Self::initialise_app).await?))
+        let app = match KATABASIS_APPLICATION.get_or_try_init(Self::initialise_app).await {
+            Ok(app) => app,
+            Err(error) => {
+                error!("Failed to fetch or initialise the application state:\n{:#?}", error);
+                return Err(error);
+            }
+        };
+
+        Ok(Arc::clone(app))
     }
 
     /// Initialises the application state, should include all required setup tasks.
@@ -43,6 +54,20 @@ impl KatabasisApp {
             },
         };
 
+        match migration_functions().await {
+            Ok(_) => {},
+            Err(error) => {
+                warn!("Failed to perform migration functions, some old files may be left over:\n{:#?}", error);
+            }
+        }
+
+        match cleanup_collections(&directories, &db_pool).await {
+            Ok(_) => {},
+            Err(error) => {
+                warn!("Failed to cleanup leftover collections, some invalid ones may appear:\n{:#?}", error);
+            }
+        }
+
         let http_client = match build_reqwest_client() {
             Ok(http_client) => http_client,
             Err(error) => {
@@ -53,6 +78,14 @@ impl KatabasisApp {
 
         let net_semaphore = NetSemaphore(Semaphore::new(10));
 
+        let settings = match settings_repository::get_settings(&db_pool).await {
+            Ok(settings) => settings,
+            Err(error) => {
+                error!("Failed to load the application settings:\n{:#?}", error);
+                return Err(error)
+            }
+        };
+
         info!("Successfully initialised the KatabasisApp");
 
         Ok(Arc::new(Self {
@@ -60,11 +93,14 @@ impl KatabasisApp {
             db_pool,
             http_client,
             net_semaphore,
+            settings,
         }))
     }
 }
 
-fn build_reqwest_client() -> error::KatabasisResult<reqwest::Client> {
+/// Builds the reqwest client used by the application, includes
+/// a USER_AGENT header set to "katabasis {current_pkg_version}".
+pub(crate) fn build_reqwest_client() -> error::KatabasisResult<reqwest::Client> {
     let mut headers = reqwest::header::HeaderMap::new();
 
     let header = reqwest::header::HeaderValue::from_str(

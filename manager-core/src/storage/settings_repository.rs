@@ -8,11 +8,14 @@ pub struct ApplicationSettings {
 
 pub struct ManagedSetting<T> {
     setting: T,
-    validator: Box<dyn Fn(T) -> bool>,
+    validator: Box<dyn Fn(T) -> bool + Sync + Send>,
 }
 
 impl<T> ManagedSetting<T> where T: Clone + 'static {
-    pub fn init(default: T, validator: fn(T) -> bool) -> ManagedSetting<T> {
+    pub fn init<TFunc>(
+        default: T,
+        validator: TFunc
+    ) -> ManagedSetting<T> where TFunc: Fn(T) -> bool + 'static + Sync + Send {
         ManagedSetting {
             setting: default,
             validator: Box::new(validator),

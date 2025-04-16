@@ -1,0 +1,11 @@
+[package]
+name = "manager-implementations"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+manager-core = { path = "../manager-core" }
+tokio = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+async-trait = "0.1.88"

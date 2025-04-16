@@ -1,0 +1,13 @@
+[package]
+name = "manager-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+tauri = { workspace = true }
+chrono = { workspace = true }
+log = { workspace = true }
+manager-core = { path = "../manager-core" }
+manager-implementations = { path = "../manager-implementations" }
+uuid = { version = "1.16.0", features = ["v4", "serde"] }

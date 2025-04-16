@@ -87,20 +87,39 @@ pub async fn remove(
     collection: &Collection,
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
 ) -> error::KatabasisResult<()> {
+    remove_id(&collection.id, db).await?;
+
+    Ok(())
+}
+
+/// Removes a single collection, using its ID.
+pub async fn remove_id(
+    id: &str,
+    db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
+) -> error::KatabasisResult<()> {
     sqlx::query!(
         r#"
             DELETE FROM collections WHERE id = $1
         "#,
-        collection.id
+        id
     ).execute(db).await?;
 
     Ok(())
 }
 
+/// Fetch all IDs.
+pub async fn get_all_ids(
+    db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
+) -> error::KatabasisResult<Vec<String>> {
+    let all_collections = get_all(None, db).await?;
+
+    Ok(all_collections.into_iter().map(|x| x.id).collect())
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{get, get_all, upsert};
-    use crate::data::support::Game;
+    use super::{get, get_all, remove, upsert};
+    use crate::data::support::PluginTarget;
     use crate::data::Collection;
     use crate::storage::initialise_database;
     use chrono::Utc;
@@ -109,7 +128,7 @@ mod tests {
         Collection {
             id: id.map_or("1".to_owned(), |x| x),
             name: "test collection".to_owned(),
-            game: Game::LethalCompany,
+            game: PluginTarget::LethalCompany,
             game_version: "".to_owned(),
             created: Utc::now(),
             modified: Utc::now(),
@@ -191,6 +210,33 @@ mod tests {
                 println!("{:#?}", err);
                 assert!(false)
             }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_remove_collection() {
+        let pool = initialise_database().await;
+        let collection = test_collection(None);
+
+        match upsert(&collection, &pool).await {
+            Ok(_) => assert!(true),
+            Err(err) => {
+                println!("{:#?}", err);
+                assert!(false)
+            },
+        }
+
+        match remove(&collection, &pool).await {
+            Ok(_) => assert!(true),
+            Err(err) => {
+                println!("{:#?}", err);
+                assert!(false)
+            }
+        }
+
+        match get("1", &pool).await {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true)
         }
     }
 }
