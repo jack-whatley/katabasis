@@ -10,18 +10,28 @@ use crate::bepinex::BepInExCollectionHandler;
 
 #[async_trait]
 pub trait CollectionHandler {
-    /// Downloads the collection loader and creates all the required folders.
+    /// Downloads the collection loader and creates all the required folders. Does
+    /// not initialise the collection into the database.
     async fn initialise_collection(
         &self,
         collection: &Collection,
-        app: &KatabasisApp,
+        state: &KatabasisApp,
     ) -> error::KatabasisResult<()>;
 
-    /// Removes a collection from the file system.
+    /// Removes a collection from the file system. Will still appear in
+    /// the database even if this is removed.
     async fn remove_collection(
         &self,
         collection: &Collection,
-        app: &KatabasisApp,
+        state: &KatabasisApp,
+    ) -> error::KatabasisResult<()>;
+
+    /// Installs the collection to its target game directory. See the
+    /// notes on [`InstallType`] for how that is implemented.
+    async fn install_collection(
+        &self,
+        collection: &Collection,
+        state: &KatabasisApp,
     ) -> error::KatabasisResult<()>;
 }
 

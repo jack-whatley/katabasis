@@ -62,7 +62,16 @@ async fn main() -> anyhow::Result<()> {
     let game = "lethalcompany".to_owned();
     let version = "Any".to_owned();
 
-    // let collection = manager_api::collection::get("eedfd873-7649-4623-80a9-ee121da20ece").await?;
+    let collection = manager_api::collection::get("3263c80c-7e09-4ef2-9805-1157a1ceacdd").await?;
+
+    match manager_api::collection::install(&collection).await {
+        Ok(_) => {
+            println!("Collection installed");
+        },
+        Err(e) => {
+            println!("Error:\n{:#?}", e);
+        }
+    }
 
     // match manager_api::collection::remove(&collection).await {
     //     Ok(_) => {
@@ -73,14 +82,19 @@ async fn main() -> anyhow::Result<()> {
     //     }
     // }
 
-    match manager_api::collection::create(name, game, version).await {
-        Ok(collection) => {
-            println!("Collection created successfully!\n{:#?}", collection);
-        }
-        Err(e) => {
-            println!("Error creating Collection\n{:#?}", e);
-        }
-    }
+    // match manager_api::collection::create(name, game, version).await {
+    //     Ok(collection) => {
+    //         println!("Collection created successfully!\n{:#?}", collection);
+    //     }
+    //     Err(e) => {
+    //         println!("Error creating Collection\n{:#?}", e);
+    //     }
+    // }
+
+    // manager_core::utils::fs::copy_contents_to(
+    //     r#"C:\Users\Jack\AppData\Roaming\dev.jackwhatley.katabasis\collections\8237acef-e40a-4c98-a93a-1fc06003ca1f"#,
+    //     r#"C:\Users\Jack\Desktop\test"#
+    // ).await?;
 
     Ok(())
 }

@@ -8,5 +8,6 @@ tokio = { workspace = true, features = ["full"] }
 clap = { version = "4.5.23", features = ["derive"] }
 manager = { path = "../manager" }
 manager-api = { path = "../manager-api" }
+manager-core = { path = "../manager-core" }
 anyhow = "1.0.95"
 simplelog = "0.12.2"

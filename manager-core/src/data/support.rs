@@ -1,20 +1,36 @@
 use std::fmt::Display;
 use serde::{Deserialize, Serialize};
+use strum::EnumIter;
 
+/// The supported methods for installing a collection to
+/// the target game directory.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, sqlx::Type)]
+#[sqlx(type_name = "TEXT", rename_all = "lowercase")]
+pub enum InstallType {
+    /// Copies all files inside the collection directory into
+    /// the game directory. Overwriting any already existing ones
+    /// in the process.
+    Copy,
+}
+
+impl From<String> for InstallType {
+    fn from(value: String) -> Self {
+        match value.to_lowercase().as_str() {
+            "copy" => Self::Copy,
+            _ => Self::Copy,
+        }
+    }
+}
+
+/// An enum representing all supported installation targets. Effectively
+/// meaning all games that are supported.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, EnumIter, sqlx::Type)]
 #[sqlx(type_name = "TEXT", rename_all = "lowercase")]
 pub enum PluginTarget {
     LethalCompany,
 }
 
 impl PluginTarget {
-    /// Gets the Steam ID of a game, will return 0 for non-Steam games.
-    pub fn get_id(&self) -> u32 {
-        match self {
-            PluginTarget::LethalCompany => 1966720,
-        }
-    }
-
     /// Gets the [`PluginLoader`] of a specific game.
     pub fn get_loader(&self) -> PluginLoader {
         match self {
@@ -79,6 +95,5 @@ mod tests {
     #[test]
     fn lethal_company_correct_loader_id() {
         assert_eq!(PluginTarget::LethalCompany.get_loader(), PluginLoader::BepInEx);
-        assert_eq!(PluginTarget::LethalCompany.get_id(), 1966720u32);
     }
 }

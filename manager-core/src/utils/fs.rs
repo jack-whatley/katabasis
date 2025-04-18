@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use bytes::Bytes;
 use futures::StreamExt;
@@ -129,28 +130,95 @@ pub async fn unzip_file_to_dir(
     Ok(())
 }
 
+/// Iterates through a directory, returning the full path to each
+/// item in it.
+pub async fn iterate_directory(path: impl Into<PathBuf>) -> Result<Vec<PathBuf>, FsError> {
+    let mut paths: Vec<PathBuf> = vec![];
+    let mut items = tokio::fs::read_dir(path.into()).await?;
+
+    while let Some(entry) = items.next_entry().await? {
+        paths.push(entry.path());
+    }
+
+    Ok(paths)
+}
+
 /// Iterates through the collection directory and returns all
 /// fetched collection ID's.
 pub async fn iterate_collections_dir(path: impl Into<PathBuf>) -> Result<Vec<String>, FsError> {
-    let collections_dir = path.into();
-    let mut all_folders = tokio::fs::read_dir(collections_dir).await?;
-
     let mut found_ids: Vec<String> = vec![];
+    let all_folders = iterate_directory(path.into()).await?;
 
-    while let Some(entry) = all_folders.next_entry().await? {
-        if let Ok(id) = Uuid::parse_str(entry.file_name().to_str().unwrap()) {
-            found_ids.push(format!("{}", id.hyphenated()));
+    for path in all_folders {
+        if path.is_dir() {
+            let name = path
+                .file_name()
+                .unwrap_or(OsStr::new(""))
+                .to_str()
+                .unwrap_or("");
+
+            if let Ok(id) = Uuid::parse_str(name) {
+                found_ids.push(format!("{}", id.hyphenated()));
+            }
         }
     }
 
     Ok(found_ids)
 }
 
+/// Copies all the contents of a provided directory into another
+/// overwriting any duplicates that appear.
+pub async fn copy_contents_to(
+    source_dir: impl Into<PathBuf>,
+    target_dir: impl Into<PathBuf>,
+) -> Result<(), FsError> {
+    let source_contents = iterate_directory(source_dir.into()).await?;
+    let target_dir = target_dir.into();
+
+    for path in source_contents {
+        if let Some(name) = path.file_name() {
+            if path.is_dir() {
+                copy_contents_recursive(&path, target_dir.join(name)).await?;
+            }
+            else {
+                tokio::fs::copy(&path, target_dir.join(name)).await?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn copy_contents_recursive(
+    source_dir: impl Into<PathBuf>,
+    target_dir: impl Into<PathBuf>,
+) -> Result<(), FsError> {
+    let source_contents = iterate_directory(source_dir.into()).await?;
+    let target_dir = target_dir.into();
+
+    tokio::fs::create_dir(target_dir.clone()).await?;
+
+    // MUST USE path.clone() here otherwise a recursion overflow is
+    // encountered when compiling (from references).
+    for path in source_contents {
+        if let Some(name) = path.file_name() {
+            if path.is_dir() {
+                Box::pin(copy_contents_recursive(path.clone(), target_dir.join(name))).await?;
+            }
+            else {
+                tokio::fs::copy(path.clone(), target_dir.join(name)).await?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::{Path, PathBuf};
     use uuid::Uuid;
-    use super::iterate_collections_dir;
+    use super::{copy_contents_to, iterate_collections_dir, iterate_directory};
 
     async fn initialise_test_dir() -> PathBuf {
         let test_dir = std::env::temp_dir()
@@ -190,5 +258,43 @@ mod tests {
         cleanup_test_dir(&test_dir).await;
 
         assert_eq!(ids, file_ids);
+    }
+
+    #[tokio::test]
+    async fn test_copy_contents_to() {
+        let source_dir = std::env::temp_dir()
+            .join("dev.jackwhatley.katabasis.tests")
+            .join("core_fs_tests_src");
+        let target_dir = std::env::temp_dir()
+            .join("dev.jackwhatley.katabasis.tests")
+            .join("core_fs_tests_tgt");
+
+        tokio::fs::create_dir_all(&source_dir).await.unwrap();
+        tokio::fs::create_dir_all(&target_dir).await.unwrap();
+
+        tokio::fs::create_dir_all(
+            source_dir.join("test.path")
+        ).await.unwrap();
+
+        tokio::fs::create_dir_all(
+            source_dir.join("test.path2")
+        ).await.unwrap();
+
+        tokio::fs::create_dir_all(
+            source_dir.join("test.path").join("sub.path")
+        ).await.unwrap();
+
+        copy_contents_to(&source_dir, &target_dir).await.unwrap();
+
+        let all_folders = iterate_directory(&target_dir).await.unwrap();
+        let all_sub_folders = iterate_directory(
+            target_dir.join("test.path")
+        ).await.unwrap();
+
+        cleanup_test_dir(&source_dir).await;
+        cleanup_test_dir(&target_dir).await;
+
+        assert_eq!(all_folders.len(), 2usize);
+        assert_eq!(all_sub_folders.len(), 1usize);
     }
 }

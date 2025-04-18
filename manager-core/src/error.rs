@@ -28,6 +28,12 @@ pub enum KatabasisErrorKind {
 
     #[error("Http Error: {0}")]
     HttpError(#[from] HttpError),
+
+    #[error("Steam Locate Error: {0}")]
+    SteamLocateError(#[from] steamlocate::Error),
+    
+    #[error("Tokio Join Error: {0}")]
+    TokioJoinError(#[from] tokio::task::JoinError),
 }
 
 #[derive(Debug)]

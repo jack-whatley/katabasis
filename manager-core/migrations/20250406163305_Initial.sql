@@ -4,6 +4,7 @@ CREATE TABLE collections (
     name TEXT NOT NULL,
     game TEXT NOT NULL,
     game_version TEXT NOT NULL,
+    install_type TEXT NOT NULL,
 
     created INTEGER NOT NULL,
     modified INTEGER NOT NULL,

@@ -3,10 +3,12 @@ use async_trait::async_trait;
 use log::{error, info, warn};
 use serde_json::Value;
 use manager_core::data::Collection;
+use manager_core::data::support::InstallType;
 use manager_core::error;
 use manager_core::state::KatabasisApp;
 use manager_core::utils::{fs, net};
 use manager_core::utils::net::fetch_stream;
+use manager_core::data::locator;
 use crate::CollectionHandler;
 
 pub struct BepInExCollectionHandler;
@@ -18,9 +20,9 @@ impl CollectionHandler for BepInExCollectionHandler {
     async fn initialise_collection(
         &self,
         collection: &Collection,
-        app: &KatabasisApp,
+        state: &KatabasisApp,
     ) -> error::KatabasisResult<()> {
-        let collection_dir = app.directories.collection_dir(&collection.id);
+        let collection_dir = state.directories.collection_dir(&collection.id);
 
         fs::create_dir(&collection_dir, false).await?;
 
@@ -53,9 +55,9 @@ impl CollectionHandler for BepInExCollectionHandler {
     async fn remove_collection(
         &self,
         collection: &Collection,
-        app: &KatabasisApp,
+        state: &KatabasisApp,
     ) -> error::KatabasisResult<()> {
-        let collection_dir = app.directories.collection_dir(&collection.id);
+        let collection_dir = state.directories.collection_dir(&collection.id);
 
         if collection_dir.exists() {
             match tokio::fs::remove_dir_all(&collection_dir).await {
@@ -70,6 +72,16 @@ impl CollectionHandler for BepInExCollectionHandler {
         }
         
         Ok(())
+    }
+
+    async fn install_collection(
+        &self,
+        collection: &Collection,
+        state: &KatabasisApp,
+    ) -> error::KatabasisResult<()> {
+        match collection.install_type {
+            InstallType::Copy => Ok(install_collection_copy(collection, state).await?)
+        }
     }
 }
 
@@ -134,4 +146,28 @@ async fn download_latest_bepinex_v5(file_path: Option<PathBuf>) -> error::Kataba
             format!("Failed to download the latest BepInEx version from GitHub, no match for '{:?}' found.", BEPINEX_WIN_64)
         ).into()
     )
+}
+
+/// Installs the collection via copy for BepInEx collections. The
+/// process is:
+///
+/// 1. Wiping the current BepInEx directory if it exists.
+/// 2. Copying the current collection folder to the game folder.
+async fn install_collection_copy(
+    collection: &Collection,
+    state: &KatabasisApp
+) -> error::KatabasisResult<()> {
+    let install_location = locator::find_game(&collection.game).await?;
+    let bepinex_location = install_location.join("BepInEx");
+
+    if bepinex_location.exists() {
+        fs::remove_dir_all(&bepinex_location).await?;
+    }
+
+    fs::create_dir(&bepinex_location, false).await?;
+
+    let collection_dir = state.directories.collection_dir(&collection.id);
+    fs::copy_contents_to(collection_dir, &bepinex_location).await?;
+
+    Ok(())
 }

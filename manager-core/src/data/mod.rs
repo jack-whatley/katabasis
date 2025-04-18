@@ -1,9 +1,10 @@
 use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use crate::data::support::{PluginTarget, PluginSource};
+use crate::data::support::{PluginTarget, PluginSource, InstallType};
 use crate::error;
 
 pub mod support;
+pub mod locator;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Collection {
@@ -11,6 +12,7 @@ pub struct Collection {
     pub name: String,
     pub game: PluginTarget,
     pub game_version: String,
+    pub install_type: InstallType,
     pub created: DateTime<Utc>,
     pub modified: DateTime<Utc>,
     pub last_played: Option<DateTime<Utc>>
@@ -21,7 +23,8 @@ impl PartialEq for Collection {
         self.id == other.id &&
         self.name == other.name &&
         self.game == other.game &&
-        self.game_version == other.game_version
+        self.game_version == other.game_version &&
+        self.install_type == other.install_type
     }
 }
 
@@ -40,6 +43,7 @@ pub(crate) struct IntermediateCollection {
     pub name: String,
     pub game: PluginTarget,
     pub game_version: String,
+    pub install_type: InstallType,
     pub created: i64,
     pub modified: i64,
     pub last_played: Option<i64>,
@@ -54,6 +58,7 @@ impl TryFrom<IntermediateCollection> for Collection {
             name: value.name,
             game: value.game,
             game_version: value.game_version,
+            install_type: value.install_type,
             created: Utc
                 .timestamp_opt(value.created, 0)
                 .single()

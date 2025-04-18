@@ -2,7 +2,7 @@ use chrono::Utc;
 use log::warn;
 use uuid::Uuid;
 use manager_core::data::Collection;
-use manager_core::data::support::PluginTarget;
+use manager_core::data::support::{InstallType, PluginTarget};
 use manager_core::error;
 use manager_core::state::KatabasisApp;
 use manager_core::storage::collection_repository;
@@ -26,6 +26,7 @@ pub async fn create(
         name,
         game: parsed_game,
         game_version: version,
+        install_type: InstallType::Copy, // TODO: ALLOW USER INPUT
         created: time,
         modified: time,
         last_played: None,
@@ -56,8 +57,18 @@ pub async fn remove(collection: &Collection) -> error::KatabasisResult<()> {
     Ok(())
 }
 
+/// Fetches a collection object based on the ID.
 pub async fn get(id: &str) -> error::KatabasisResult<Collection> {
     let state = KatabasisApp::get().await?;
 
     collection_repository::get(id, &state.db_pool).await
+}
+
+pub async fn install(collection: &Collection) -> error::KatabasisResult<()> {
+    let state = KatabasisApp::get().await?;
+    let collection_handler = get_collection_handler(&collection.game.get_loader());
+
+    collection_handler.install_collection(collection, &state).await?;
+
+    Ok(())
 }

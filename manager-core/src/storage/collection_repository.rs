@@ -14,23 +14,25 @@ pub async fn upsert(
     sqlx::query!(
         r#"
             INSERT INTO collections (
-                id, name, game, game_version, created, modified, last_played
+                id, name, game, game_version, install_type, created, modified, last_played
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7
+                $1, $2, $3, $4, $5, $6, $7, $8
             )
             ON CONFLICT (id) DO UPDATE SET
                 name = $2,
                 game = $3,
                 game_version = $4,
-                created = $5,
-                modified = $6,
-                last_played = $7
+                install_type = $5,
+                created = $6,
+                modified = $7,
+                last_played = $8
         "#,
         collection.id,
         collection.name,
         collection.game,
         collection.game_version,
+        collection.install_type,
         created_timestamp,
         modified_timestamp,
         last_played_timestamp
@@ -47,7 +49,7 @@ pub async fn get(
     let single_result = sqlx::query_as!(
         IntermediateCollection,
         r#"
-            SELECT id, name, game, game_version, created, modified, last_played
+            SELECT id, name, game, game_version, install_type, created, modified, last_played
             FROM collections
             WHERE id = $1
         "#,
@@ -67,7 +69,7 @@ pub async fn get_all(
     let all_collections = sqlx::query_as!(
         IntermediateCollection,
         r#"
-            SELECT id, name, game, game_version, created, modified, last_played
+            SELECT id, name, game, game_version, install_type, created, modified, last_played
             FROM collections
             LIMIT $1
         "#,
@@ -119,7 +121,7 @@ pub async fn get_all_ids(
 #[cfg(test)]
 mod tests {
     use super::{get, get_all, remove, upsert};
-    use crate::data::support::PluginTarget;
+    use crate::data::support::{InstallType, PluginTarget};
     use crate::data::Collection;
     use crate::storage::initialise_database;
     use chrono::Utc;
@@ -130,6 +132,7 @@ mod tests {
             name: "test collection".to_owned(),
             game: PluginTarget::LethalCompany,
             game_version: "".to_owned(),
+            install_type: InstallType::Copy,
             created: Utc::now(),
             modified: Utc::now(),
             last_played: None,
