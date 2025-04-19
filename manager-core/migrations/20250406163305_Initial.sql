@@ -18,7 +18,9 @@ CREATE TABLE plugins (
     name TEXT NOT NULL,
     source TEXT NOT NULL,
     api_url TEXT NOT NULL,
+    version TEXT NOT NULL,
     is_enabled INTEGER NOT NULL,
+    icon_url TEXT,
 
     PRIMARY KEY (id)
 );

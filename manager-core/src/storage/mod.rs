@@ -9,6 +9,7 @@ use crate::error;
 pub mod collection_repository;
 
 pub mod settings_repository;
+mod plugin_repository;
 
 const DB_NAME: &str = "katabasis.db";
 

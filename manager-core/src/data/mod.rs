@@ -28,14 +28,15 @@ impl PartialEq for Collection {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Plugin {
     pub id: String,
     pub name: String,
     pub source: PluginSource,
     pub api_url: String,
     pub version: String,
-    pub is_enabled: bool
+    pub is_enabled: bool,
+    pub icon_url: Option<String>
 }
 
 pub(crate) struct IntermediateCollection {
@@ -46,7 +47,12 @@ pub(crate) struct IntermediateCollection {
     pub install_type: InstallType,
     pub created: i64,
     pub modified: i64,
-    pub last_played: Option<i64>,
+    pub last_played: Option<i64>
+}
+
+pub(crate) struct CollectionPluginLink {
+    pub collection_id: String,
+    pub plugin_id: String
 }
 
 impl TryFrom<IntermediateCollection> for Collection {
