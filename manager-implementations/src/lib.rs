@@ -1,13 +1,13 @@
 mod thunderstore;
 mod bepinex;
 
+use crate::bepinex::BepInExCollectionHandler;
+use crate::thunderstore::ThunderstorePluginHandler;
 use async_trait::async_trait;
-use manager_core::data::support::{PluginLoader, PluginSource};
+use manager_core::data::support::{PluginLoader, PluginSource, PluginTarget};
 use manager_core::data::{Collection, Plugin};
 use manager_core::error;
 use manager_core::state::KatabasisApp;
-use crate::bepinex::BepInExCollectionHandler;
-use crate::thunderstore::ThunderstorePluginHandler;
 
 #[async_trait]
 pub trait CollectionHandler {
@@ -40,21 +40,66 @@ pub trait CollectionHandler {
 /// type of [`PluginSource`].
 #[async_trait]
 pub trait PluginHandler {
-    fn get_api_url(&self, ) -> String;
+    /// Initialises a plugin from the provided URL.
+    async fn initialise_plugin(
+        &self,
+        state: &KatabasisApp,
+        url: &str,
+    ) -> error::KatabasisResult<Plugin>;
 
-    async fn download_latest(&self, plugin: &Plugin) -> error::KatabasisResult<()>;
+    /// Downloads the plugin and install it into the collection
+    /// directory.
+    async fn download_latest(
+        &self,
+        state: &KatabasisApp,
+        collection: &Collection,
+        plugin: &Plugin
+    ) -> error::KatabasisResult<()>;
 
-    async fn check_for_updates(&self, plugin: &Plugin) -> error::KatabasisResult<bool>;
+    /// Checks if the current mod version number is different to the
+    /// latest from the plugin source, returns true if that is the case.
+    async fn has_update(
+        &self,
+        state: &KatabasisApp,
+        plugin: &Plugin,
+    ) -> error::KatabasisResult<bool>;
 }
 
-pub fn get_collection_handler(collection_type: &PluginLoader) -> Box<impl CollectionHandler + Sized + Send + Sync> {
+/// Fetches a relevant collection handler from the provided type.
+pub fn get_collection_handler(
+    collection_type: &PluginLoader
+) -> Box<impl CollectionHandler + Sized + Send + Sync> {
     match collection_type {
         PluginLoader::BepInEx => Box::new(BepInExCollectionHandler),
     }
 }
 
-pub fn get_downloader(plugin_loader: PluginSource) -> Box<impl PluginHandler + Sized + Send + Sync> {
-    match plugin_loader {
-        PluginSource::Thunderstore => Box::new(ThunderstorePluginHandler),
+/// Parses a user provided url to determine if a link to a downloadable
+/// plugin has been provided.
+pub fn get_downloader(
+    collection_target: &PluginTarget,
+    plugin_source: &str
+) -> error::KatabasisResult<Box<impl PluginHandler + Sized + Send + Sync>> {
+    match determine_url_source(collection_target, plugin_source)? {
+        PluginSource::Thunderstore => Ok(Box::new(ThunderstorePluginHandler)),
+    }
+}
+
+/// Returns the correct plugin source based on the provided URL. If one
+/// can't be found then an error will be returned.
+fn determine_url_source(
+    _collection_target: &PluginTarget,
+    url: &str
+) -> error::KatabasisResult<PluginSource> {
+    if url.starts_with("https://thunderstore.io/c/") {
+        // TODO: USE COLLECTION TARGET TO VERIFY GAME IS VALID
+        Ok(PluginSource::Thunderstore)
+    }
+    else {
+        Err(
+            error::KatabasisErrorKind::InvalidPluginUrl(
+                format!("Provided URL is not a supported source: {}", url)
+            ).into()
+        )
     }
 }

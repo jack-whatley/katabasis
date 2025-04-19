@@ -2732,7 +2732,6 @@ dependencies = [
  "dunce",
  "futures",
  "log",
- "phf 0.11.3",
  "reqwest",
  "serde",
  "serde_json",
@@ -2754,8 +2753,13 @@ dependencies = [
  "async-trait",
  "log",
  "manager-core",
+ "once_cell",
+ "phf 0.11.3",
+ "regex",
+ "serde",
  "serde_json",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

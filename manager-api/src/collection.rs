@@ -1,12 +1,12 @@
 use chrono::Utc;
-use log::warn;
+use log::{error, warn};
 use uuid::Uuid;
 use manager_core::data::Collection;
 use manager_core::data::support::{InstallType, PluginTarget};
 use manager_core::error;
 use manager_core::state::KatabasisApp;
-use manager_core::storage::collection_repository;
-use manager_implementations::{get_collection_handler, CollectionHandler};
+use manager_core::storage::{collection_repository, plugin_repository};
+use manager_implementations::{get_collection_handler, get_downloader, CollectionHandler, PluginHandler};
 
 /// Initialises a new collection.
 pub async fn create(
@@ -64,11 +64,56 @@ pub async fn get(id: &str) -> error::KatabasisResult<Collection> {
     collection_repository::get(id, &state.db_pool).await
 }
 
+/// Installs a collection.
 pub async fn install(collection: &Collection) -> error::KatabasisResult<()> {
     let state = KatabasisApp::get().await?;
     let collection_handler = get_collection_handler(&collection.game.get_loader());
 
     collection_handler.install_collection(collection, &state).await?;
+
+    Ok(())
+}
+
+/// Initialises and adds a new [`Plugin`] to the provided
+/// collection, uses the url to parse the source.
+pub async fn add_plugin(
+    collection: &Collection,
+    plugin_url: &str
+) -> error::KatabasisResult<()> {
+    let state = KatabasisApp::get().await?;
+
+    let plugin_handler = get_downloader(
+        &collection.game,
+        plugin_url
+    )?;
+
+    let plugin = plugin_handler.initialise_plugin(
+        &state,
+        plugin_url
+    ).await?;
+
+    plugin_repository::upsert(
+        collection,
+        &plugin,
+        &state.db_pool
+    ).await?;
+
+    // TODO: Retry this step on failure
+    let download_result = plugin_handler.download_latest(
+        &state,
+        collection,
+        &plugin
+    ).await;
+
+    match download_result {
+        Ok(_) => {},
+        Err(e) => {
+            error!("Failed to download plugin:\n{:#?}", e);
+            plugin_repository::remove(&plugin, &state.db_pool).await?;
+
+            return Err(e)
+        }
+    }
 
     Ok(())
 }

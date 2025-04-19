@@ -8,19 +8,18 @@ description = ""
 tokio = { workspace = true, features = ["full"] }
 chrono = { workspace = true }
 log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
 reqwest = { version = "0.12.15", features = ["json", "stream"]}
 futures = "0.3"
 bytes = { version = "1.10", features = ["serde"] }
-serde_json = { workspace = true }
 thiserror = "2.0.11"
 tracing = "0.1.41"
 tracing-error = "0.2.1"
-serde = { version = "1.0.216", features = ["derive"] }
 sqlx = { version = "0.8", features = [ "runtime-tokio", "sqlite", "macros" ] }
 dirs = "6.0.0"
 dunce = "1.0.5"
 zip = "2.6.1"
-uuid = { version = "1.16.0", features = ["v4"] }
-phf = { version = "0.11.3", features = ["phf_macros"] }
 steamlocate = "2.0.1"
 strum = { version = "0.27", features = ["derive"] }

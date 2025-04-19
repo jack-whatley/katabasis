@@ -7,13 +7,12 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use crate::error;
 
 pub mod collection_repository;
-
 pub mod settings_repository;
-mod plugin_repository;
+pub mod plugin_repository;
 
 const DB_NAME: &str = "katabasis.db";
 
-pub(crate) async fn connect_database(database_directory: impl AsRef<Path>) -> error::KatabasisResult<Pool<Sqlite>> {
+pub async fn connect_database(database_directory: impl AsRef<Path>) -> error::KatabasisResult<Pool<Sqlite>> {
     let mut db_path = database_directory
         .as_ref()
         .join(DB_NAME)

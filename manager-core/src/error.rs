@@ -34,6 +34,9 @@ pub enum KatabasisErrorKind {
     
     #[error("Tokio Join Error: {0}")]
     TokioJoinError(#[from] tokio::task::JoinError),
+
+    #[error("Invalid Plugin URL: {0}")]
+    InvalidPluginUrl(String),
 }
 
 #[derive(Debug)]

@@ -167,7 +167,7 @@ async fn install_collection_copy(
     fs::create_dir(&bepinex_location, false).await?;
 
     let collection_dir = state.directories.collection_dir(&collection.id);
-    fs::copy_contents_to(collection_dir, &bepinex_location).await?;
+    fs::copy_contents_to(collection_dir, &install_location).await?;
 
     Ok(())
 }

@@ -132,12 +132,16 @@ pub async fn unzip_file_to_dir(
 
 /// Iterates through a directory, returning the full path to each
 /// item in it.
-pub async fn iterate_directory(path: impl Into<PathBuf>) -> Result<Vec<PathBuf>, FsError> {
+pub async fn iterate_directory(path: impl Into<PathBuf>, recursive: bool) -> Result<Vec<PathBuf>, FsError> {
     let mut paths: Vec<PathBuf> = vec![];
     let mut items = tokio::fs::read_dir(path.into()).await?;
 
     while let Some(entry) = items.next_entry().await? {
         paths.push(entry.path());
+
+        if recursive && entry.path().is_dir() {
+            paths.append(&mut Box::pin(iterate_directory(entry.path().clone(), true)).await?)
+        }
     }
 
     Ok(paths)
@@ -147,7 +151,7 @@ pub async fn iterate_directory(path: impl Into<PathBuf>) -> Result<Vec<PathBuf>,
 /// fetched collection ID's.
 pub async fn iterate_collections_dir(path: impl Into<PathBuf>) -> Result<Vec<String>, FsError> {
     let mut found_ids: Vec<String> = vec![];
-    let all_folders = iterate_directory(path.into()).await?;
+    let all_folders = iterate_directory(path.into(), false).await?;
 
     for path in all_folders {
         if path.is_dir() {
@@ -172,7 +176,7 @@ pub async fn copy_contents_to(
     source_dir: impl Into<PathBuf>,
     target_dir: impl Into<PathBuf>,
 ) -> Result<(), FsError> {
-    let source_contents = iterate_directory(source_dir.into()).await?;
+    let source_contents = iterate_directory(source_dir.into(), false).await?;
     let target_dir = target_dir.into();
 
     for path in source_contents {
@@ -193,10 +197,12 @@ async fn copy_contents_recursive(
     source_dir: impl Into<PathBuf>,
     target_dir: impl Into<PathBuf>,
 ) -> Result<(), FsError> {
-    let source_contents = iterate_directory(source_dir.into()).await?;
+    let source_contents = iterate_directory(source_dir.into(), false).await?;
     let target_dir = target_dir.into();
 
-    tokio::fs::create_dir(target_dir.clone()).await?;
+    if !target_dir.exists() {
+        tokio::fs::create_dir(target_dir.clone()).await?;
+    }
 
     // MUST USE path.clone() here otherwise a recursion overflow is
     // encountered when compiling (from references).
@@ -286,10 +292,14 @@ mod tests {
 
         copy_contents_to(&source_dir, &target_dir).await.unwrap();
 
-        let all_folders = iterate_directory(&target_dir).await.unwrap();
+        let all_folders = iterate_directory(&target_dir, false).await.unwrap();
         let all_sub_folders = iterate_directory(
-            target_dir.join("test.path")
+            target_dir.join("test.path"),
+            false
         ).await.unwrap();
+
+        println!("TestDir: {:#?}", &source_dir);
+        println!("TestDir: {:#?}", &target_dir);
 
         cleanup_test_dir(&source_dir).await;
         cleanup_test_dir(&target_dir).await;

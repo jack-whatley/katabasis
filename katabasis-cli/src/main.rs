@@ -62,7 +62,27 @@ async fn main() -> anyhow::Result<()> {
     let game = "lethalcompany".to_owned();
     let version = "Any".to_owned();
 
-    let collection = manager_api::collection::get("3263c80c-7e09-4ef2-9805-1157a1ceacdd").await?;
+    let collection = manager_api::collection::get("ab095ec3-b60a-448c-b5cd-b9ea58503666").await?;
+
+    // let collection = match manager_api::collection::create(name, game, version).await {
+    //     Ok(collection) => {
+    //         println!("Collection created successfully!\n{:#?}", collection);
+    //         collection
+    //     }
+    //     Err(e) => {
+    //         println!("Error creating Collection\n{:#?}", e);
+    //         return Err(e.into());
+    //     }
+    // };
+
+    // match manager_api::collection::add_plugin(&collection, "https://thunderstore.io/c/lethal-company/p/notnotnotswipez/MoreCompany/").await {
+    //     Ok(_) => {
+    //         println!("Added plugin");
+    //     }
+    //     Err(e) => {
+    //         println!("Failed to add plugin:\n{:#?}", e);
+    //     }
+    // }
 
     match manager_api::collection::install(&collection).await {
         Ok(_) => {
@@ -79,15 +99,6 @@ async fn main() -> anyhow::Result<()> {
     //     },
     //     Err(e) => {
     //         println!("Error:\n{:#?}", e);
-    //     }
-    // }
-
-    // match manager_api::collection::create(name, game, version).await {
-    //     Ok(collection) => {
-    //         println!("Collection created successfully!\n{:#?}", collection);
-    //     }
-    //     Err(e) => {
-    //         println!("Error creating Collection\n{:#?}", e);
     //     }
     // }
 

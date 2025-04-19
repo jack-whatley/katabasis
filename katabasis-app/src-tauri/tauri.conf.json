@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
-    "productName": "katabasis-app",
+    "productName": "katabasis",
     "version": "0.0.2",
     "identifier": "dev.jackwhatley.katabasis",
     "build": {

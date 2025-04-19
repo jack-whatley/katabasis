@@ -5,7 +5,7 @@ use log::{error, info, warn};
 use tokio::sync::{OnceCell, Semaphore};
 use crate::storage::settings_repository;
 use crate::storage::settings_repository::ApplicationSettings;
-use crate::utils::{cleanup_collections, migration_functions, NetSemaphore};
+use crate::utils::{cleanup_collections, migration_functions, IOSemaphore, NetSemaphore};
 
 pub mod directories;
 
@@ -17,6 +17,7 @@ pub struct KatabasisApp {
     pub db_pool: sqlx::SqlitePool,
     pub http_client: reqwest::Client,
     pub net_semaphore: NetSemaphore,
+    pub io_semaphore: IOSemaphore,
     pub settings: ApplicationSettings,
 }
 
@@ -76,8 +77,6 @@ impl KatabasisApp {
             },
         };
 
-        let net_semaphore = NetSemaphore(Semaphore::new(10));
-
         let settings = match settings_repository::get_settings(&db_pool).await {
             Ok(settings) => settings,
             Err(error) => {
@@ -86,6 +85,9 @@ impl KatabasisApp {
             }
         };
 
+        let net_semaphore = NetSemaphore(Semaphore::new(settings.concurrent_downloads.get() as usize));
+        let io_semaphore = IOSemaphore(Semaphore::new(settings.concurrent_operations.get() as usize));
+
         info!("Successfully initialised the KatabasisApp");
 
         Ok(Arc::new(Self {
@@ -93,6 +95,7 @@ impl KatabasisApp {
             db_pool,
             http_client,
             net_semaphore,
+            io_semaphore,
             settings,
         }))
     }
