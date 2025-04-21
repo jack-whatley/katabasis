@@ -4,6 +4,10 @@ mod bepinex;
 use crate::bepinex::BepInExCollectionHandler;
 use crate::thunderstore::ThunderstorePluginHandler;
 use async_trait::async_trait;
+use log::info;
+use once_cell::sync::Lazy;
+use phf::{phf_map, Map};
+use regex::Regex;
 use manager_core::data::support::{PluginLoader, PluginSource, PluginTarget};
 use manager_core::data::{Collection, Plugin};
 use manager_core::error;
@@ -88,12 +92,31 @@ pub fn get_downloader(
 /// Returns the correct plugin source based on the provided URL. If one
 /// can't be found then an error will be returned.
 fn determine_url_source(
-    _collection_target: &PluginTarget,
+    collection_target: &PluginTarget,
     url: &str
 ) -> error::KatabasisResult<PluginSource> {
-    if url.starts_with("https://thunderstore.io/c/") {
-        // TODO: USE COLLECTION TARGET TO VERIFY GAME IS VALID
-        Ok(PluginSource::Thunderstore)
+    static RE: Lazy<Regex> = Lazy::new(
+        || {
+            Regex::new(r"https://([A-Za-z0-9.]{4})?thunderstore\.io/c/(?<game>[A-Za-z0-9-]+)/p/(?<namespace>[A-Za-z0-9]+)/(?<name>[A-Za-z0-9]+)/")
+                .unwrap()
+        }
+    );
+
+    if let Some(captures) = RE.captures(url) {
+        let target_name = match collection_target {
+            PluginTarget::LethalCompany => "lethal-company",
+        };
+
+        if target_name == &captures["game"] {
+            Ok(PluginSource::Thunderstore)
+        }
+        else {
+            Err(
+                error::KatabasisErrorKind::InvalidPluginUrl(
+                    format!("Failed to extract game from Thunderstore URL: {}", url)
+                ).into()
+            )
+        }
     }
     else {
         Err(

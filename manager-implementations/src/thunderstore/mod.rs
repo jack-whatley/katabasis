@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 use async_trait::async_trait;
-use log::warn;
+use log::{info, warn};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -92,12 +92,12 @@ impl PluginHandler for ThunderstorePluginHandler {
 fn get_thunderstore_url(url: &str) -> error::KatabasisResult<String> {
     static RE: Lazy<Regex> = Lazy::new(
         || {
-            Regex::new(r"https://thunderstore\.io/c/([A-Za-z0-9-])+/p/(?<namespace>[A-Za-z0-9]+)/(?<name>[A-Za-z0-9]+)/")
+            Regex::new(r"https://([A-Za-z0-9.]{4})?thunderstore\.io/c/([A-Za-z0-9-])+/p/(?<namespace>[A-Za-z0-9]+)/(?<name>[A-Za-z0-9]+)/")
                 .unwrap()
         }
     );
 
-    if let Some(captures) = RE.captures(url) {
+    if let Some(captures) = RE.captures(&url) {
         Ok(
             format!(
                 "https://thunderstore.io/api/experimental/package/{}/{}",
@@ -230,6 +230,17 @@ mod tests {
         assert_eq!(
             parsed_url,
             "https://thunderstore.io/api/experimental/package/Evaisa/LethalThings".to_owned()
+        )
+    }
+
+    #[test]
+    fn test_parse_new_url() {
+        let parsed_url = get_thunderstore_url("https://new.thunderstore.io/c/lethal-company/p/RugbugRedfern/Skinwalkers/")
+            .unwrap();
+
+        assert_eq!(
+            parsed_url,
+            "https://thunderstore.io/api/experimental/package/RugbugRedfern/Skinwalkers".to_owned()
         )
     }
 }

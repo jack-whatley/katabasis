@@ -1,7 +1,8 @@
+use std::path::PathBuf;
 use chrono::Utc;
-use log::{error, warn};
+use log::{error, info, warn};
 use uuid::Uuid;
-use manager_core::data::Collection;
+use manager_core::data::{Collection, Plugin};
 use manager_core::data::support::{InstallType, PluginTarget};
 use manager_core::error;
 use manager_core::state::KatabasisApp;
@@ -79,7 +80,7 @@ pub async fn install(collection: &Collection) -> error::KatabasisResult<()> {
 pub async fn add_plugin(
     collection: &Collection,
     plugin_url: &str
-) -> error::KatabasisResult<()> {
+) -> error::KatabasisResult<Plugin> {
     let state = KatabasisApp::get().await?;
 
     let plugin_handler = get_downloader(
@@ -115,5 +116,12 @@ pub async fn add_plugin(
         }
     }
 
-    Ok(())
+    Ok(plugin)
+}
+
+/// Returns the theoretical path to the collection's directory.
+pub async fn directory(collection: &Collection) -> error::KatabasisResult<PathBuf> {
+    let state = KatabasisApp::get().await?;
+
+    Ok(state.directories.collection_dir(&collection.id))
 }

@@ -1,6 +1,7 @@
 use crate::data::{Collection, CollectionPluginLink, Plugin};
 use crate::error;
 use log::warn;
+use crate::storage::collection_repository;
 
 /// Inserts or updates a plugin.
 pub async fn upsert(
@@ -131,6 +132,24 @@ pub async fn remove(
     }
 
     Ok(())
+}
+
+/// Fetch the collection from the plugin ID.
+pub async fn get_collection(
+    plugin_id: &str,
+    db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
+) -> error::KatabasisResult<Collection> {
+    let link = sqlx::query_as!(
+        CollectionPluginLink,
+        r#"
+            SELECT collection_id, plugin_id
+            FROM collections_plugins_link
+            WHERE plugin_id = $1
+        "#,
+        plugin_id
+    ).fetch_one(db).await?;
+
+    Ok(collection_repository::get(&link.collection_id, db).await?)
 }
 
 #[cfg(test)]

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT collection_id, plugin_id\n            FROM collections_plugins_link\n            WHERE plugin_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "collection_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "plugin_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "adcda6ceb92fe4a9ac992e4138934f6523e925cf753ed19b48c34f7346d80e04"
+}

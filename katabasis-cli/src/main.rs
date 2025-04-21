@@ -75,23 +75,23 @@ async fn main() -> anyhow::Result<()> {
     //     }
     // };
 
-    // match manager_api::collection::add_plugin(&collection, "https://thunderstore.io/c/lethal-company/p/notnotnotswipez/MoreCompany/").await {
-    //     Ok(_) => {
-    //         println!("Added plugin");
-    //     }
-    //     Err(e) => {
-    //         println!("Failed to add plugin:\n{:#?}", e);
-    //     }
-    // }
-
-    match manager_api::collection::install(&collection).await {
+    match manager_api::collection::add_plugin(&collection, "https://new.thunderstore.io/c/lethal-company/p/RugbugRedfern/Skinwalkers/").await {
         Ok(_) => {
-            println!("Collection installed");
-        },
+            println!("Added plugin");
+        }
         Err(e) => {
-            println!("Error:\n{:#?}", e);
+            println!("Failed to add plugin:\n{:#?}", e);
         }
     }
+
+    // match manager_api::collection::install(&collection).await {
+    //     Ok(_) => {
+    //         println!("Collection installed");
+    //     },
+    //     Err(e) => {
+    //         println!("Error:\n{:#?}", e);
+    //     }
+    // }
 
     // match manager_api::collection::remove(&collection).await {
     //     Ok(_) => {
