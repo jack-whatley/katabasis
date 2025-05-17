@@ -1,6 +1,4 @@
--- Main Migration Script
 CREATE TABLE collections (
-    id TEXT NOT NULL,
     name TEXT NOT NULL,
     game TEXT NOT NULL,
     game_version TEXT NOT NULL,
@@ -10,11 +8,10 @@ CREATE TABLE collections (
     modified INTEGER NOT NULL,
     last_played INTEGER,
 
-    PRIMARY KEY (id)
+    PRIMARY KEY (name)
 );
 
 CREATE TABLE plugins (
-    id TEXT NOT NULL,
     name TEXT NOT NULL,
     source TEXT NOT NULL,
     api_url TEXT NOT NULL,
@@ -22,13 +19,12 @@ CREATE TABLE plugins (
     is_enabled INTEGER NOT NULL,
     icon_url TEXT,
 
-    PRIMARY KEY (id)
+    PRIMARY KEY (name)
 );
 
 CREATE TABLE collections_plugins_link (
-    collection_id TEXT NOT NULL,
-    plugin_id TEXT NOT NULL,
+    collection_name TEXT NOT NULL,
+    plugin_name TEXT NOT NULL,
 
-    -- Using compound primary key to prevent duplicate plugins appearing in collections
-    PRIMARY KEY (collection_id, plugin_id)
+    PRIMARY KEY (collection_name, plugin_name)
 );

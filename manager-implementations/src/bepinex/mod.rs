@@ -22,7 +22,7 @@ impl CollectionHandler for BepInExCollectionHandler {
         collection: &Collection,
         state: &KatabasisApp,
     ) -> error::KatabasisResult<()> {
-        let collection_dir = state.directories.collection_dir(&collection.id);
+        let collection_dir = state.directories.collection_dir(&collection.name);
 
         fs::create_dir(&collection_dir, false).await?;
 
@@ -57,7 +57,7 @@ impl CollectionHandler for BepInExCollectionHandler {
         collection: &Collection,
         state: &KatabasisApp,
     ) -> error::KatabasisResult<()> {
-        let collection_dir = state.directories.collection_dir(&collection.id);
+        let collection_dir = state.directories.collection_dir(&collection.name);
 
         if collection_dir.exists() {
             match tokio::fs::remove_dir_all(&collection_dir).await {
@@ -85,7 +85,7 @@ impl CollectionHandler for BepInExCollectionHandler {
     }
 }
 
-const BEPINEX_URL: &str = "https://api.github.com/repos/BepInEx/BepInEx/releases/latest";
+const BEPINEX_URL: &str = "https://api.github.com/repos/BepInEx/BepInEx/releases/72353341";
 
 macro_rules! parse_section {
     ($method:expr) => {
@@ -166,7 +166,7 @@ async fn install_collection_copy(
 
     fs::create_dir(&bepinex_location, false).await?;
 
-    let collection_dir = state.directories.collection_dir(&collection.id);
+    let collection_dir = state.directories.collection_dir(&collection.name);
     fs::copy_contents_to(collection_dir, &install_location).await?;
 
     Ok(())

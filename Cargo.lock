@@ -2469,9 +2469,10 @@ dependencies = [
 name = "katabasis-app"
 version = "0.0.2"
 dependencies = [
- "manager",
+ "manager-api",
  "serde",
  "serde_json",
+ "simplelog",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
@@ -2485,7 +2486,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "manager",
  "manager-api",
  "manager-core",
  "simplelog",
@@ -2680,34 +2680,6 @@ name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
-
-[[package]]
-name = "manager"
-version = "0.1.1"
-dependencies = [
- "async-trait",
- "bytes",
- "chrono",
- "dirs",
- "dunce",
- "lazy_static",
- "prost",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "sqlx",
- "steamlocate",
- "thiserror 2.0.12",
- "tokio",
- "toml",
- "tonic",
- "tonic-build",
- "url",
- "uuid",
- "walkdir",
- "zip",
-]
 
 [[package]]
 name = "manager-api"

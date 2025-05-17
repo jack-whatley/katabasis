@@ -14,21 +14,19 @@ pub async fn upsert(
     sqlx::query!(
         r#"
             INSERT INTO collections (
-                id, name, game, game_version, install_type, created, modified, last_played
+                name, game, game_version, install_type, created, modified, last_played
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8
+                $1, $2, $3, $4, $5, $6, $7
             )
-            ON CONFLICT (id) DO UPDATE SET
-                name = $2,
-                game = $3,
-                game_version = $4,
-                install_type = $5,
-                created = $6,
-                modified = $7,
-                last_played = $8
+            ON CONFLICT (name) DO UPDATE SET
+                game = $2,
+                game_version = $3,
+                install_type = $4,
+                created = $5,
+                modified = $6,
+                last_played = $7
         "#,
-        collection.id,
         collection.name,
         collection.game,
         collection.game_version,
@@ -49,9 +47,9 @@ pub async fn get(
     let single_result = sqlx::query_as!(
         IntermediateCollection,
         r#"
-            SELECT id, name, game, game_version, install_type, created, modified, last_played
+            SELECT name, game, game_version, install_type, created, modified, last_played
             FROM collections
-            WHERE id = $1
+            WHERE name = $1
         "#,
         id
     ).fetch_one(db).await?;
@@ -69,7 +67,7 @@ pub async fn get_all(
     let all_collections = sqlx::query_as!(
         IntermediateCollection,
         r#"
-            SELECT id, name, game, game_version, install_type, created, modified, last_played
+            SELECT name, game, game_version, install_type, created, modified, last_played
             FROM collections
             LIMIT $1
         "#,
@@ -89,7 +87,7 @@ pub async fn remove(
     collection: &Collection,
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
 ) -> error::KatabasisResult<()> {
-    remove_id(&collection.id, db).await?;
+    remove_id(&collection.name, db).await?;
 
     Ok(())
 }
@@ -101,7 +99,7 @@ pub async fn remove_id(
 ) -> error::KatabasisResult<()> {
     sqlx::query!(
         r#"
-            DELETE FROM collections WHERE id = $1
+            DELETE FROM collections WHERE name = $1
         "#,
         id
     ).execute(db).await?;
@@ -109,13 +107,13 @@ pub async fn remove_id(
     Ok(())
 }
 
-/// Fetch all IDs.
-pub async fn get_all_ids(
+/// Fetch all names.
+pub async fn get_all_names(
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
 ) -> error::KatabasisResult<Vec<String>> {
     let all_collections = get_all(None, db).await?;
 
-    Ok(all_collections.into_iter().map(|x| x.id).collect())
+    Ok(all_collections.into_iter().map(|x| x.name).collect())
 }
 
 #[cfg(test)]
@@ -128,7 +126,6 @@ mod tests {
 
     fn test_collection(id: Option<String>) -> Collection {
         Collection {
-            id: id.map_or("1".to_owned(), |x| x),
             name: "test collection".to_owned(),
             game: PluginTarget::LethalCompany,
             game_version: "".to_owned(),

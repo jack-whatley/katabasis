@@ -8,7 +8,6 @@ pub mod locator;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Collection {
-    pub id: String,
     pub name: String,
     pub game: PluginTarget,
     pub game_version: String,
@@ -20,7 +19,6 @@ pub struct Collection {
 
 impl PartialEq for Collection {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id &&
         self.name == other.name &&
         self.game == other.game &&
         self.game_version == other.game_version &&
@@ -30,17 +28,15 @@ impl PartialEq for Collection {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Plugin {
-    pub id: String,
     pub name: String,
     pub source: PluginSource,
     pub api_url: String,
     pub version: String,
     pub is_enabled: bool,
-    pub icon_url: Option<String>
+    pub icon_url: Option<String>,
 }
 
 pub(crate) struct IntermediateCollection {
-    pub id: String,
     pub name: String,
     pub game: PluginTarget,
     pub game_version: String,
@@ -51,8 +47,8 @@ pub(crate) struct IntermediateCollection {
 }
 
 pub(crate) struct CollectionPluginLink {
-    pub collection_id: String,
-    pub plugin_id: String
+    pub collection_name: String,
+    pub plugin_name: String
 }
 
 impl TryFrom<IntermediateCollection> for Collection {
@@ -60,7 +56,6 @@ impl TryFrom<IntermediateCollection> for Collection {
 
     fn try_from(value: IntermediateCollection) -> Result<Self, Self::Error> {
         Ok(Self {
-            id: value.id,
             name: value.name,
             game: value.game,
             game_version: value.game_version,

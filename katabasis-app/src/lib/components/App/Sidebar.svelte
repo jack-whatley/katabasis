@@ -103,7 +103,7 @@
             <p>{item.display}</p>
         </SidebarButton>
     {/each}
-    <div class="mt-auto mb-2 w-full flex">
+    <div class="mt-auto w-full flex">
         <Dialogue title="Create Collection" class="w-full h-min mx-2 mt-2">
             {#snippet button()}
                 <div class="flex flex-row flex-1 p-2 items-center gap-2 transition ease-in-out duration-75 rounded select-none hover:bg-emerald-800 hover:cursor-pointer">
@@ -127,10 +127,10 @@
             {/snippet}
         </Dialogue>
     </div>
-<!--    <div class="mb-2 w-full">-->
-<!--        <SidebarButton url={settingsItem.url}>-->
-<!--            <Icon colour="#FFFFFF" icon={settingsItem.icon}/>-->
-<!--            <p>{settingsItem.display}</p>-->
-<!--        </SidebarButton>-->
-<!--    </div>-->
+    <div class="mb-2 w-full">
+        <SidebarButton url={settingsItem.url}>
+            <Icon colour="#FFFFFF" icon={settingsItem.icon}/>
+            <p>{settingsItem.display}</p>
+        </SidebarButton>
+    </div>
 </div>

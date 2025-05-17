@@ -1,6 +1,6 @@
 use crate::data::{Collection, CollectionPluginLink, Plugin};
 use crate::error;
-use log::warn;
+use log::{error, warn};
 use crate::storage::collection_repository;
 
 /// Inserts or updates a plugin.
@@ -10,49 +10,61 @@ pub async fn upsert(
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
 ) -> error::KatabasisResult<()> {
     let link = CollectionPluginLink {
-        collection_id: collection.id.clone(),
-        plugin_id: plugin.id.clone(),
+        collection_name: collection.name.clone(),
+        plugin_name: plugin.name.clone(),
     };
 
     let plugin_result = sqlx::query!(
         r#"
             INSERT INTO plugins (
-                id, name, source, api_url, version, is_enabled, icon_url
+                name, source, api_url, version, is_enabled, icon_url
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7
+                $1, $2, $3, $4, $5, $6
             )
-            ON CONFLICT (id) DO UPDATE SET
-                name = $2,
-                source = $3,
-                api_url = $4,
-                version = $5,
-                is_enabled = $6,
-                icon_url = $7
+            ON CONFLICT (name) DO UPDATE SET
+                source = $2,
+                api_url = $3,
+                version = $4,
+                is_enabled = $5,
+                icon_url = $6
         "#,
-        plugin.id,
         plugin.name,
         plugin.source,
         plugin.api_url,
         plugin.version,
         plugin.is_enabled,
-        plugin.icon_url
+        plugin.icon_url,
     ).execute(db).await;
 
     let link_result = sqlx::query!(
         r#"
             INSERT INTO collections_plugins_link (
-                collection_id, plugin_id
+                collection_name, plugin_name
             ) VALUES (
                 $1, $2
             ) ON CONFLICT DO NOTHING
         "#,
-        link.collection_id,
-        link.plugin_id,
+        link.collection_name,
+        link.plugin_name,
     ).execute(db).await;
 
     if plugin_result.is_err() || link_result.is_err() {
         remove(plugin, db).await?;
+
+        if plugin_result.is_err() {
+            let error = plugin_result.unwrap_err();
+
+            error!("Plugin creation failed due to plugin insert error:\n{:#?}", error);
+            return Err(error.into())
+        }
+
+        if link_result.is_err() {
+            let error = link_result.unwrap_err();
+
+            error!("Plugin creation failed due to plugin link insert error:\n{:#?}", error);
+            return Err(error.into())
+        }
     }
 
     Ok(())
@@ -60,39 +72,39 @@ pub async fn upsert(
 
 /// Fetches a single plugin from an ID.
 pub async fn get(
-    id: &str,
+    name: &str,
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite>
 ) -> error::KatabasisResult<Plugin> {
     Ok(
         sqlx::query_as!(
             Plugin,
             r#"
-                SELECT id, name, source, api_url, version, is_enabled as `is_enabled: bool`, icon_url
+                SELECT name, source, api_url, version, is_enabled as `is_enabled: bool`, icon_url
                 FROM plugins
-                WHERE id = $1
+                WHERE name = $1
             "#,
-            id
+            name
         ).fetch_one(db).await?
     )
 }
 
 /// Fetches all plugins for a single collection.
 pub async fn get_all(
-    collection: &Collection,
+    collection_id: &str,
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
 ) -> error::KatabasisResult<Vec<Plugin>> {
     let links = sqlx::query_as!(
         CollectionPluginLink,
         r#"
-            SELECT collection_id, plugin_id FROM collections_plugins_link WHERE collection_id = $1
+            SELECT collection_name, plugin_name FROM collections_plugins_link WHERE collection_name = $1
         "#,
-        collection.id
+        collection_id
     ).fetch_all(db).await?;
 
     let mut plugins = Vec::with_capacity(links.len());
 
     for link in links {
-        plugins.push(get(&link.plugin_id, db).await?);
+        plugins.push(get(&link.plugin_name, db).await?);
     }
 
     Ok(plugins)
@@ -105,9 +117,9 @@ pub async fn remove(
 ) -> error::KatabasisResult<()> {
     let remove_plugin = sqlx::query!(
         r#"
-            DELETE FROM plugins WHERE id = $1
+            DELETE FROM plugins WHERE name = $1
         "#,
-        plugin.id
+        plugin.name
     ).execute(db).await;
 
     match remove_plugin {
@@ -119,9 +131,9 @@ pub async fn remove(
 
     let remove_link = sqlx::query!(
         r#"
-            DELETE FROM collections_plugins_link WHERE plugin_id = $1
+            DELETE FROM collections_plugins_link WHERE plugin_name = $1
         "#,
-        plugin.id
+        plugin.name
     ).execute(db).await;
 
     match remove_link {
@@ -136,20 +148,20 @@ pub async fn remove(
 
 /// Fetch the collection from the plugin ID.
 pub async fn get_collection(
-    plugin_id: &str,
+    plugin_name: &str,
     db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
 ) -> error::KatabasisResult<Collection> {
     let link = sqlx::query_as!(
         CollectionPluginLink,
         r#"
-            SELECT collection_id, plugin_id
+            SELECT collection_name, plugin_name
             FROM collections_plugins_link
-            WHERE plugin_id = $1
+            WHERE plugin_name = $1
         "#,
-        plugin_id
+        plugin_name
     ).fetch_one(db).await?;
 
-    Ok(collection_repository::get(&link.collection_id, db).await?)
+    Ok(collection_repository::get(&link.collection_name, db).await?)
 }
 
 #[cfg(test)]
@@ -163,7 +175,6 @@ mod tests {
         db: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy
     ) -> error::KatabasisResult<(Collection, Plugin, Plugin)> {
         let collection = Collection {
-            id: "1".to_owned(),
             name: "EXAMPLE COLLECTION".to_owned(),
             game: PluginTarget::LethalCompany,
             game_version: "Any".to_owned(),
@@ -176,23 +187,21 @@ mod tests {
         collection_repository::upsert(&collection, db).await?;
 
         let plugin_one = Plugin {
-            id: "PLUGIN ONE".to_owned(),
             name: "EXAMPLE PLUGIN".to_owned(),
             source: PluginSource::Thunderstore,
             api_url: "".to_owned(),
             version: "0.0.1".to_owned(),
             is_enabled: true,
-            icon_url: None
+            icon_url: None,
         };
 
         let plugin_two = Plugin {
-            id: "PLUGIN TWO".to_owned(),
             name: "EXAMPLE PLUGIN TWO".to_owned(),
             source: PluginSource::Thunderstore,
             api_url: "".to_owned(),
             version: "0.1.5".to_owned(),
             is_enabled: false,
-            icon_url: None
+            icon_url: None,
         };
 
         upsert(&collection, &plugin_one, db).await?;
@@ -210,7 +219,7 @@ mod tests {
             Err(err) => panic!("Failed to create test data:\n{:#?}", err),
         };
 
-        match get_all(&collection, &pool).await {
+        match get_all(&collection.name, &pool).await {
             Ok(plugins) => {
                 assert_eq!(plugins.len(), 2);
                 assert_eq!(plugins, vec![p1, p2]);
@@ -239,12 +248,12 @@ mod tests {
             }
         }
 
-        match get(&p1.id, &pool).await {
+        match get(&p1.name, &pool).await {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
         }
 
-        match get_all(&collection, &pool).await {
+        match get_all(&collection.name, &pool).await {
             Ok(plugins) => {
                 assert_eq!(plugins.len(), 1);
                 assert_eq!(plugins, vec![p2]);
@@ -275,7 +284,7 @@ mod tests {
             }
         }
 
-        match get(&p1.id, &pool).await {
+        match get(&p1.name, &pool).await {
             Ok(plugin) => {
                 assert_eq!(plugin.name, "MODIFIED PLUGIN");
             },

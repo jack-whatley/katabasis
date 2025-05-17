@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO collections_plugins_link (\n                collection_name, plugin_name\n            ) VALUES (\n                $1, $2\n            ) ON CONFLICT DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f9cc4f4ec242d0d478f586c32e2509138fad1e3da691901df5618459efd86345"
+}

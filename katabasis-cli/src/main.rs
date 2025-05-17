@@ -7,10 +7,6 @@ mod opt;
 mod runner;
 mod plugin;
 
-// TODO: Super Important: https://github.com/JetBrains/intellij-community/blob/master/native/WinElevator/README.txt
-// Should create something similar to this for handling symlinks (dont need to bother with piping or general commands
-// though, probably can just use windows api for symlinks directly)
-
 #[derive(Subcommand)]
 enum CollectionCreate {
     AddPlugin {

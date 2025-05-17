@@ -10,7 +10,7 @@
     let enabled = $state(plugin.is_enabled);
 
     async function removePlugin() {
-        await invoke('remove_plugins', { collectionId: collectionId, pluginId: plugin.id });
+        await invoke('remove_plugins', { pluginId: plugin.id });
     }
 </script>
 

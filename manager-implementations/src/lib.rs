@@ -2,12 +2,8 @@ mod thunderstore;
 mod bepinex;
 
 use crate::bepinex::BepInExCollectionHandler;
-use crate::thunderstore::ThunderstorePluginHandler;
+use crate::thunderstore::{ThunderstorePluginHandler, THUNDERSTORE_RE};
 use async_trait::async_trait;
-use log::info;
-use once_cell::sync::Lazy;
-use phf::{phf_map, Map};
-use regex::Regex;
 use manager_core::data::support::{PluginLoader, PluginSource, PluginTarget};
 use manager_core::data::{Collection, Plugin};
 use manager_core::error;
@@ -52,12 +48,13 @@ pub trait PluginHandler {
     ) -> error::KatabasisResult<Plugin>;
 
     /// Downloads the plugin and install it into the collection
-    /// directory.
+    /// directory. Updates the plugin structs plugin_path field
+    /// to the correct install location.
     async fn download_latest(
         &self,
         state: &KatabasisApp,
         collection: &Collection,
-        plugin: &Plugin
+        plugin: &mut Plugin
     ) -> error::KatabasisResult<()>;
 
     /// Checks if the current mod version number is different to the
@@ -67,6 +64,15 @@ pub trait PluginHandler {
         state: &KatabasisApp,
         plugin: &Plugin,
     ) -> error::KatabasisResult<bool>;
+
+    /// Enables or disables the plugin file based on input. This involves
+    /// renaming the plugin file to contain _DISABLED. Takes the current state
+    /// from the passed in plugin.
+    async fn switch_plugin_state(
+        &self,
+        state: &KatabasisApp,
+        plugin: &Plugin,
+    ) -> error::KatabasisResult<()>;
 }
 
 /// Fetches a relevant collection handler from the provided type.
@@ -84,8 +90,14 @@ pub fn get_downloader(
     collection_target: &PluginTarget,
     plugin_source: &str
 ) -> error::KatabasisResult<Box<impl PluginHandler + Sized + Send + Sync>> {
-    match determine_url_source(collection_target, plugin_source)? {
-        PluginSource::Thunderstore => Ok(Box::new(ThunderstorePluginHandler)),
+    Ok(get_downloader_direct(&determine_url_source(collection_target, plugin_source)?))
+}
+
+pub fn get_downloader_direct(
+    plugin_source: &PluginSource,
+) -> Box<impl PluginHandler + Sized + Send + Sync> {
+    match plugin_source {
+        PluginSource::Thunderstore => Box::new(ThunderstorePluginHandler),
     }
 }
 
@@ -95,14 +107,7 @@ fn determine_url_source(
     collection_target: &PluginTarget,
     url: &str
 ) -> error::KatabasisResult<PluginSource> {
-    static RE: Lazy<Regex> = Lazy::new(
-        || {
-            Regex::new(r"https://([A-Za-z0-9.]{4})?thunderstore\.io/c/(?<game>[A-Za-z0-9-]+)/p/(?<namespace>[A-Za-z0-9]+)/(?<name>[A-Za-z0-9]+)/")
-                .unwrap()
-        }
-    );
-
-    if let Some(captures) = RE.captures(url) {
+    if let Some(captures) = THUNDERSTORE_RE.captures(url) {
         let target_name = match collection_target {
             PluginTarget::LethalCompany => "lethal-company",
         };
@@ -113,7 +118,7 @@ fn determine_url_source(
         else {
             Err(
                 error::KatabasisErrorKind::InvalidPluginUrl(
-                    format!("Failed to extract game from Thunderstore URL: {}", url)
+                    format!("Captured game '{}' did not match target name '{}'", &captures["game"], target_name)
                 ).into()
             )
         }

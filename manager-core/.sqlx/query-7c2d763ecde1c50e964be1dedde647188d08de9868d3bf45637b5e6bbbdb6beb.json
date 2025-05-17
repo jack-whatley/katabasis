@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM collections_plugins_link WHERE plugin_name = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "7c2d763ecde1c50e964be1dedde647188d08de9868d3bf45637b5e6bbbdb6beb"
+}

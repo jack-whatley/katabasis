@@ -6,3 +6,5 @@ target/
 *.pdb
 
 .env
+
+application.log

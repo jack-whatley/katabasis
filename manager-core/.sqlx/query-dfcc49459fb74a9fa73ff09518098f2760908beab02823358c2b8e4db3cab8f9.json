@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO collections (\n                name, game, game_version, install_type, created, modified, last_played\n            )\n            VALUES (\n                $1, $2, $3, $4, $5, $6, $7\n            )\n            ON CONFLICT (name) DO UPDATE SET\n                game = $2,\n                game_version = $3,\n                install_type = $4,\n                created = $5,\n                modified = $6,\n                last_played = $7\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "dfcc49459fb74a9fa73ff09518098f2760908beab02823358c2b8e4db3cab8f9"
+}

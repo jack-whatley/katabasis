@@ -5,9 +5,8 @@ edition = "2021"
 
 [dependencies]
 tokio = { workspace = true, features = ["full"] }
+simplelog = { workspace = true }
 clap = { version = "4.5.23", features = ["derive"] }
-manager = { path = "../manager" }
 manager-api = { path = "../manager-api" }
 manager-core = { path = "../manager-core" }
 anyhow = "1.0.95"
-simplelog = "0.12.2"

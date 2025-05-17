@@ -36,7 +36,7 @@
     }
 
     async function importPlugin(collectionId: string): Promise<void> {
-        await invoke('import_plugin', { collectionId: collectionId, pluginSource: selectedSource, pluginUrl: inputPluginUrl });
+        await invoke('import_plugin', { collectionId: collectionId, pluginUrl: inputPluginUrl });
     }
 </script>
 

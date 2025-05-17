@@ -20,7 +20,7 @@
             {#each collections as collection}
                 <CollectionCard collection={collection} />
             {:else}
-                <p>No collections exist...</p>
+                <p class="relative left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 italic text-zinc-500">No collections found...</p>
             {/each}
         </div>
     {:catch error}

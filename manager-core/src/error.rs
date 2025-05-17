@@ -2,6 +2,7 @@ use crate::utils::fs::FsError;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
+use serde::Serializer;
 use sqlx::migrate::MigrateError;
 use tracing_error::InstrumentError;
 use crate::utils::net::HttpError;
@@ -37,6 +38,15 @@ pub enum KatabasisErrorKind {
 
     #[error("Invalid Plugin URL: {0}")]
     InvalidPluginUrl(String),
+
+    #[error("Invalid or Missing Plugin Path: {0}")]
+    InvalidOrMissingPluginPath(String),
+
+    #[error("Acquire Error: {0}")]
+    AcquireError(#[from] tokio::sync::AcquireError),
+
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error),
 }
 
 #[derive(Debug)]
@@ -72,6 +82,15 @@ impl<E: Into<KatabasisErrorKind>> From<E> for KatabasisError {
 impl KatabasisError {
     pub fn to_error(self) -> KatabasisError {
         self.into()
+    }
+}
+
+impl serde::Serialize for KatabasisError {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 

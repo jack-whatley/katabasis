@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use chrono::Utc;
-use log::{error, info, warn};
+use log::{error, warn};
 use uuid::Uuid;
 use manager_core::data::{Collection, Plugin};
 use manager_core::data::support::{InstallType, PluginTarget};
@@ -65,6 +65,13 @@ pub async fn get(id: &str) -> error::KatabasisResult<Collection> {
     collection_repository::get(id, &state.db_pool).await
 }
 
+/// Fetches all collections.
+pub async fn get_all() -> error::KatabasisResult<Vec<Collection>> {
+    let state = KatabasisApp::get().await?;
+    
+    collection_repository::get_all(None, &state.db_pool).await
+}
+
 /// Installs a collection.
 pub async fn install(collection: &Collection) -> error::KatabasisResult<()> {
     let state = KatabasisApp::get().await?;
@@ -88,9 +95,16 @@ pub async fn add_plugin(
         plugin_url
     )?;
 
-    let plugin = plugin_handler.initialise_plugin(
+    let mut plugin = plugin_handler.initialise_plugin(
         &state,
         plugin_url
+    ).await?;
+
+    // TODO: Retry this step on failure
+    plugin_handler.download_latest(
+        &state,
+        collection,
+        &mut plugin
     ).await?;
 
     plugin_repository::upsert(
@@ -98,23 +112,6 @@ pub async fn add_plugin(
         &plugin,
         &state.db_pool
     ).await?;
-
-    // TODO: Retry this step on failure
-    let download_result = plugin_handler.download_latest(
-        &state,
-        collection,
-        &plugin
-    ).await;
-
-    match download_result {
-        Ok(_) => {},
-        Err(e) => {
-            error!("Failed to download plugin:\n{:#?}", e);
-            plugin_repository::remove(&plugin, &state.db_pool).await?;
-
-            return Err(e)
-        }
-    }
 
     Ok(plugin)
 }

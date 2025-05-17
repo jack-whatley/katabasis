@@ -178,11 +178,12 @@ pub async fn copy_contents_to(
 ) -> Result<(), FsError> {
     let source_contents = iterate_directory(source_dir.into(), false).await?;
     let target_dir = target_dir.into();
+    let ignore = vec!["_DISABLED"];
 
     for path in source_contents {
         if let Some(name) = path.file_name() {
             if path.is_dir() {
-                copy_contents_recursive(&path, target_dir.join(name)).await?;
+                copy_contents_recursive(&path, target_dir.join(name), &ignore).await?;
             }
             else {
                 tokio::fs::copy(&path, target_dir.join(name)).await?;
@@ -196,6 +197,7 @@ pub async fn copy_contents_to(
 async fn copy_contents_recursive(
     source_dir: impl Into<PathBuf>,
     target_dir: impl Into<PathBuf>,
+    ignore_targets: &Vec<&str>,
 ) -> Result<(), FsError> {
     let source_contents = iterate_directory(source_dir.into(), false).await?;
     let target_dir = target_dir.into();
@@ -209,9 +211,15 @@ async fn copy_contents_recursive(
     for path in source_contents {
         if let Some(name) = path.file_name() {
             if path.is_dir() {
-                Box::pin(copy_contents_recursive(path.clone(), target_dir.join(name))).await?;
+                Box::pin(
+                    copy_contents_recursive(path.clone(), target_dir.join(name), ignore_targets)
+                ).await?;
             }
             else {
+                if ignore_targets.iter().any(|t| path.ends_with(t)) {
+                    continue;
+                }
+
                 tokio::fs::copy(path.clone(), target_dir.join(name)).await?;
             }
         }

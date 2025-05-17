@@ -24,7 +24,7 @@ pub async fn cleanup_collections(
     let fs_collections = fs::iterate_collections_dir(
         directories.collections_dir()
     ).await?;
-    let db_collections = collection_repository::get_all_ids(db_pool).await?;
+    let db_collections = collection_repository::get_all_names(db_pool).await?;
 
     let hash_fs_collections: HashSet<String> = HashSet::from_iter(fs_collections.into_iter());
     let hash_db_collections: HashSet<String> = HashSet::from_iter(db_collections.into_iter());

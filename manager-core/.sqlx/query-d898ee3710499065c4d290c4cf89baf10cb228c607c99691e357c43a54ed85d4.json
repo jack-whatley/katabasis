@@ -1,46 +1,41 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT id, name, game, game_version, install_type, created, modified, last_played\n            FROM collections\n            WHERE id = $1\n        ",
+  "query": "\n            SELECT name, game, game_version, install_type, created, modified, last_played\n            FROM collections\n            WHERE name = $1\n        ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "name",
         "ordinal": 0,
         "type_info": "Text"
       },
       {
-        "name": "name",
+        "name": "game",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "game",
+        "name": "game_version",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "game_version",
+        "name": "install_type",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "install_type",
-        "ordinal": 4,
-        "type_info": "Text"
-      },
-      {
         "name": "created",
-        "ordinal": 5,
+        "ordinal": 4,
         "type_info": "Integer"
       },
       {
         "name": "modified",
-        "ordinal": 6,
+        "ordinal": 5,
         "type_info": "Integer"
       },
       {
         "name": "last_played",
-        "ordinal": 7,
+        "ordinal": 6,
         "type_info": "Integer"
       }
     ],
@@ -54,9 +49,8 @@
       false,
       false,
       false,
-      false,
       true
     ]
   },
-  "hash": "4aaf3692de1622a79095ad75d73fc0a19d2b5080ff2481e15225f200fccdac7b"
+  "hash": "d898ee3710499065c4d290c4cf89baf10cb228c607c99691e357c43a54ed85d4"
 }

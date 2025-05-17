@@ -19,9 +19,9 @@
         <NavButton isClose={false} clickCallback={minimiseApp}>
             <Icon colour="#FFFFFF" icon={Icons.Minimise}/>
         </NavButton>
-<!--        <NavButton isClose={false} clickCallback={() => notificationState = !notificationState}>-->
-<!--            <Icon colour="#FFFFFF" icon={Icons.Notification}/>-->
-<!--        </NavButton>-->
+        <NavButton isClose={false} clickCallback={() => notificationState = !notificationState}>
+            <Icon colour="#FFFFFF" icon={Icons.Notification}/>
+        </NavButton>
         <NavButton isClose={true} clickCallback={closeApp}>
             <Icon colour="#FFFFFF" icon={Icons.Close}/>
         </NavButton>

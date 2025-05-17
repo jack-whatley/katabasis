@@ -1,42 +1,37 @@
 {
   "db_name": "SQLite",
-  "query": "\n                SELECT id, name, game, game_version, created, modified, last_played\n                FROM collections\n            WHERE id IN ($1)",
+  "query": "\n                SELECT name, source, api_url, version, is_enabled as `is_enabled: bool`, icon_url\n                FROM plugins\n                WHERE name = $1\n            ",
   "describe": {
     "columns": [
       {
-        "name": "id",
+        "name": "name",
         "ordinal": 0,
         "type_info": "Text"
       },
       {
-        "name": "name",
+        "name": "source",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "game",
+        "name": "api_url",
         "ordinal": 2,
         "type_info": "Text"
       },
       {
-        "name": "game_version",
+        "name": "version",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "created",
+        "name": "is_enabled: bool",
         "ordinal": 4,
         "type_info": "Integer"
       },
       {
-        "name": "modified",
+        "name": "icon_url",
         "ordinal": 5,
-        "type_info": "Integer"
-      },
-      {
-        "name": "last_played",
-        "ordinal": 6,
-        "type_info": "Integer"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -48,9 +43,8 @@
       false,
       false,
       false,
-      false,
       true
     ]
   },
-  "hash": "29df9b1197868c122bb0c9ebf588deb0743200ad26364c7ca426e02aaed23f87"
+  "hash": "27b6cc75f817d3029d040016d8460469dc21ae6f0aa6696ff79f5b5bf8fd9c4d"
 }
