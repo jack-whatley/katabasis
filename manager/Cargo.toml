@@ -1,0 +1,9 @@
+[package]
+name = "manager"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { workspace = true, features = ["sync", "fs"] }
+eyre = { workspace = true }
+dirs-next = { workspace = true }

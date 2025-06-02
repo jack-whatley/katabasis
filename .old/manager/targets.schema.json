@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "dev.jackwhatley.katabasis.targets.schema.json",
+    "title": "Targets Schema",
+    "description": "A schema for Katabasis Targets",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "The target's name"
+            },
+            "slug": {
+                "type": "string",
+                "description": "The targets slug parameter on Thunderstore"
+            },
+            "loader": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the plugin loader"
+                    },
+                    "packageOverride": {
+                        "type": "string",
+                        "description": "Override of the default mod package download"
+                    },
+                    "required": ["name"]
+                }
+            },
+            "platforms": {
+                "type": "object",
+                "properties": {
+                    "steam": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "description": "The steam id of the target"
+                            }
+                        }
+                    }
+                }
+            },
+            "required": ["name", "slug", "loader", "platforms"]
+        }
+    }
+}
