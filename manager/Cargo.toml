@@ -7,3 +7,5 @@ edition = "2024"
 tokio = { workspace = true, features = ["sync", "fs"] }
 eyre = { workspace = true }
 dirs-next = { workspace = true }
+sqlx = { workspace = true }
+tracing = { workspace = true }
