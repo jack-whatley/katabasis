@@ -13,6 +13,7 @@ opt-level = 3
 
 [workspace.dependencies]
 tokio = "1.45.1"
+futures = "0.3.31"
 reqwest = { version = "0.12.18", features = ["json", "stream"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite", "macros"] }
 
