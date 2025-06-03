@@ -14,7 +14,7 @@ impl AppState {
     }
 
     async fn init() -> Result<Arc<Self>> {
-        let app_dir = crate::utils::paths::application_dir();
+        let app_dir = crate::utils::paths::default_app_dir();
         let app_state = Self {};
 
         // Initialising the application directory, should always exist.
