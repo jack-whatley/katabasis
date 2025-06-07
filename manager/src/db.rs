@@ -43,8 +43,7 @@ impl Db {
             .await
             .context("Failed to open connection to database")?;
 
-        // TODO: Implement as part of KB-5.
-        // sqlx::migrate!().run(&sqlite_pool).await?;
+        sqlx::migrate!().run(&sqlite_pool).await?;
 
         Ok((Self(sqlite_pool), db_exists))
     }

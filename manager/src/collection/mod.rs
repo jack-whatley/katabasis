@@ -10,21 +10,24 @@ pub struct Collection {
     pub plugins: Vec<Plugin>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Plugin {
     pub id: String,
     pub enabled: bool,
     pub install_time: DateTime<Utc>,
+    #[serde(flatten)]
     pub kind: PluginType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub enum PluginType {
     Thunderstore(ThunderstorePlugin),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ThunderstorePlugin {
     pub ident: VersionIdent,
 }

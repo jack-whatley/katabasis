@@ -1,0 +1,5 @@
+workspace.xml
+*.iml
+*.local.xml
+usage.statistics.xml
+dataSources/
