@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["cli", "manager"]
+members = [ "app","cli", "manager"]
 
 [profile.release]
 opt-level = "s"
@@ -12,7 +12,7 @@ panic = "abort"
 opt-level = 3
 
 [workspace.dependencies]
-tokio = "1.45.1"
+tokio = { version = "1.45.1", features = ["full"] }
 futures = "0.3.31"
 reqwest = { version = "0.12.18", features = ["json", "stream"] }
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite", "macros"] }
