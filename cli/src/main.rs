@@ -13,6 +13,10 @@ struct CLI {
 #[derive(Subcommand)]
 enum Commands {
     Directory,
+    Target {
+        #[arg(short, long)]
+        slug: Option<String>,
+    },
 }
 
 #[tokio::main]
@@ -24,6 +28,14 @@ async fn main() -> Result<()> {
     match &cli.command {
         Commands::Directory => {
             println!("Application Directory: '{}'", manager::app_dir().display());
+        }
+        Commands::Target { slug } => {
+            if let Some(slug) = slug {
+                println!("{:#?}", manager::specific_target(&slug));
+            }
+            else {
+                println!("{:#?}", manager::all_targets().collect::<Vec<_>>());
+            }
         }
     }
 
