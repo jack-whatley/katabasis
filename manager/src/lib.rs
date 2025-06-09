@@ -6,6 +6,7 @@ mod utils;
 
 pub mod api;
 mod targets;
+mod platforms;
 
 #[allow(unused_imports)]
 pub use api::*;
