@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR REPLACE INTO collections (\n                    name, plugins, game\n                ) VALUES (\n                    $1, $2, $3\n                )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "416d9fc9308afc8e597fee28600dde6487db4242ebfea315b0c938e1c71a0f09"
+}

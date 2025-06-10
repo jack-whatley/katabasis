@@ -1,7 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt;
 use std::sync::LazyLock;
-use serde::{Deserialize, Serialize};
 use strum::{EnumIter, IntoEnumIterator};
 
 const TARGET_JSON: &str = include_str!("../targets.json");
