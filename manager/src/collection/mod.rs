@@ -1,12 +1,13 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::thunderstore::version::VersionIdent;
+use crate::{targets::Target, thunderstore::version::VersionIdent};
 
 #[derive(Debug)]
 pub struct Collection {
     /// Acts as the primary key for the collection, should be unique.
     pub name: String,
+    pub game: Target,
     pub plugins: Vec<Plugin>,
 }
 
