@@ -123,9 +123,15 @@ impl fmt::Display for ModLoader<'_> {
     }
 }
 
-impl ModLoader<'_> {}
-
-impl ModLoader<'static> {}
+impl ModLoader<'_> {
+    /// Returns the name of the Thunderstore package of the loader, will always
+    /// take the target's specific override unless there is none.
+    pub fn loader_package(&self) -> Cow<'_, str> {
+        match self.kind {
+            ModLoaderKind::BepInEx => Cow::Borrowed(self.package_override.unwrap_or("BepInEx-BepInExPack-5.4.2100")),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

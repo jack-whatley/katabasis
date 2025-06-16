@@ -18,3 +18,8 @@ pub fn default_app_dir() -> PathBuf {
 pub fn db_path() -> PathBuf {
     default_app_dir().join(DB_FILE_NAME)
 }
+
+/// Returns the path to a specific collection.
+pub fn collection_dir(id: &str) -> PathBuf {
+    default_app_dir().join("collections").join(id)
+}

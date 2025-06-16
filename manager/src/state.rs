@@ -30,6 +30,10 @@ impl AppState {
     pub fn http(&self) -> &reqwest::Client {
         &self.http
     }
+    
+    pub fn db(&self) -> &Db {
+        &self.db
+    }
 
     async fn init() -> Result<Arc<Self>> {
         let app_dir = crate::utils::paths::default_app_dir();

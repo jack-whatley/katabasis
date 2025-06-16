@@ -1,5 +1,5 @@
 use std::fmt::Display;
-
+use std::str::FromStr;
 use eyre::ensure;
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +65,12 @@ impl TryFrom<String> for VersionIdent {
             version,
         })
     }
+}
+
+impl FromStr for VersionIdent {
+    type Err = eyre::Report;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> { s.to_string().try_into() }
 }
 
 impl Display for VersionIdent {

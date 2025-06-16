@@ -17,6 +17,10 @@ enum Commands {
         #[arg(short, long)]
         slug: Option<String>,
     },
+    Create {
+        name: String,
+        game: String,
+    }
 }
 
 #[tokio::main]
@@ -36,6 +40,9 @@ async fn main() -> Result<()> {
             else {
                 println!("{:#?}", manager::all_targets().collect::<Vec<_>>());
             }
+        }
+        Commands::Create { name, game } => {
+            manager::create_collection(&name, &game).await?;
         }
     }
 

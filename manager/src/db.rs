@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
-use eyre::{Context, OptionExt, Result};
+use eyre::{eyre, Context, OptionExt, Result};
 use sqlx::{
     Pool, Sqlite,
     migrate::MigrateDatabase,
@@ -10,10 +10,6 @@ use sqlx::{
 use crate::{collection::Collection, targets, utils};
 
 pub struct Db(Pool<Sqlite>);
-
-pub struct AppSaveData {
-    pub collections: Vec<Collection>,
-}
 
 impl Db {
     /// Initialises a new instance of [`Db`] and returns
@@ -68,28 +64,6 @@ impl Db {
         Ok(())
     }
 
-    pub async fn load_app_data(&self) -> Result<AppSaveData> {
-        let collections = sqlx::query!("SELECT name, plugins, game FROM collections")
-            .fetch_all(&self.0)
-            .await?;
-
-        let collections = collections
-            .into_iter()
-            .map(|row| -> Result<Collection> {
-                let plugins = serde_json::from_str(&row.plugins)?;
-                let game = targets::from_slug(&row.game).ok_or_eyre("target is not recognised")?;
-
-                Ok(Collection {
-                    name: row.name,
-                    plugins,
-                    game,
-                })
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(AppSaveData { collections })
-    }
-
     /// Saves a single [`Collection`] to the application database.
     pub async fn save_collection(&self, collection: &Collection) -> Result<()> {
         self.with_transaction(async |tx| {
@@ -111,6 +85,47 @@ impl Db {
             Ok(())
         })
         .await?;
+
+        Ok(())
+    }
+
+    pub async fn load_collection(&self, id: &str) -> Result<Collection> {
+        let record = sqlx::query!("SELECT name, plugins, game FROM collections WHERE name = $1", id)
+            .fetch_one(&self.0)
+            .await?;
+
+        Ok(Collection {
+            name: record.name,
+            plugins: serde_json::from_str(&record.plugins)?,
+            game: targets::from_slug(&record.game).ok_or_else(||
+                eyre!("Slug '{}' does not match any supported games", &record.game))?,
+        })
+    }
+
+    pub async fn load_all_collections(&self) -> Result<Vec<Collection>> {
+        let collections = sqlx::query!("SELECT name, plugins, game FROM collections")
+            .fetch_all(&self.0)
+            .await?;
+
+        let collections = collections
+            .into_iter()
+            .map(|row| -> Result<Collection> {
+                let plugins = serde_json::from_str(&row.plugins)?;
+                let game = targets::from_slug(&row.game).ok_or_eyre("target is not recognised")?;
+
+                Ok(Collection {
+                    name: row.name,
+                    plugins,
+                    game,
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(collections)
+    }
+
+    pub async fn remove_collection(&self, collection: &Collection) -> Result<()> {
+        sqlx::query!("DELETE FROM collections WHERE name = $1", collection.name).execute(&self.0).await?;
 
         Ok(())
     }
@@ -153,9 +168,9 @@ mod tests {
 
         assert!(db.save_collection(&collection).await.is_ok());
 
-        let save_data = db.load_app_data().await.unwrap();
+        let save_data = db.load_all_collections().await.unwrap();
 
-        assert!(save_data.collections.len() == 1);
-        assert!(save_data.collections[0].name == "EXAMPLE");
+        assert_eq!(save_data.len(), 1);
+        assert_eq!(save_data[0].name, "EXAMPLE");
     }
 }

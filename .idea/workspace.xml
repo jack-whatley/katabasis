@@ -14,11 +14,27 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4500f53f-3a63-458b-b73e-6a7838e24891" name="Changes" comment="KB-11: Creating Targets Data">
-      <change afterPath="$PROJECT_DIR$/manager/src/platforms.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="4500f53f-3a63-458b-b73e-6a7838e24891" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/manager/src/collection/install/mod.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/manager/src/thunderstore/models.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/manager/src/utils/fs.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manager/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cli/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/cli/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/.sqlx/query-416d9fc9308afc8e597fee28600dde6487db4242ebfea315b0c938e1c71a0f09.json" beforeDir="false" afterPath="$PROJECT_DIR$/manager/.sqlx/query-416d9fc9308afc8e597fee28600dde6487db4242ebfea315b0c938e1c71a0f09.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/.sqlx/query-dfa4226912e1c2c450f16693f302f711bce15733e556fcf68c447bc5c5bd9e80.json" beforeDir="false" afterPath="$PROJECT_DIR$/manager/.sqlx/query-dfa4226912e1c2c450f16693f302f711bce15733e556fcf68c447bc5c5bd9e80.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/manager/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/api/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/api/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/collection/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/collection/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/db.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/db.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/state.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/state.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/targets.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/targets.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/thunderstore/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/thunderstore/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/thunderstore/version.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/thunderstore/version.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/utils/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/utils/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/utils/net.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/utils/net.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manager/src/utils/paths.rs" beforeDir="false" afterPath="$PROJECT_DIR$/manager/src/utils/paths.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -148,7 +164,15 @@
       <workItem from="1749302275284" duration="1271000" />
       <workItem from="1749411473281" duration="1503000" />
       <workItem from="1749484901270" duration="1355000" />
-      <workItem from="1749497176772" duration="1458000" />
+      <workItem from="1749497176772" duration="2880000" />
+      <workItem from="1749573734652" duration="1346000" />
+      <workItem from="1749584569976" duration="4471000" />
+      <workItem from="1749658403149" duration="3608000" />
+      <workItem from="1749743888553" duration="2478000" />
+      <workItem from="1749815449134" duration="8980000" />
+      <workItem from="1749899097791" duration="12109000" />
+      <workItem from="1749988416870" duration="15521000" />
+      <workItem from="1750089668929" duration="9961000" />
     </task>
     <task id="LOCAL-00001" summary="KB-11: Creating Targets Data">
       <option name="closed" value="true" />
@@ -158,7 +182,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749342510359</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="KB-12: Implementing Initial Platforms Module">
+      <option name="closed" value="true" />
+      <created>1749500348130</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1749500348130</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -166,6 +198,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="KB-11: Creating Targets Data" />
-    <option name="LAST_COMMIT_MESSAGE" value="KB-11: Creating Targets Data" />
+    <MESSAGE value="KB-12: Implementing Initial Platforms Module" />
+    <option name="LAST_COMMIT_MESSAGE" value="KB-12: Implementing Initial Platforms Module" />
   </component>
 </project>

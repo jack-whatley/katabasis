@@ -13,7 +13,7 @@ pub fn init() -> Result<reqwest::Client> {
     Ok(http)
 }
 
-const DEFAULT_RETRY_ATTEMPTS: u8 = 3;
+const DEFAULT_RETRY_ATTEMPTS: u8 = 5;
 
 /// Sends a request of the provided type to the provided URL. Uses
 /// the passed in [`reqwest::Client`], with a default number of retries.
@@ -22,7 +22,7 @@ pub async fn fetch_url(
     url: &str,
     client: &reqwest::Client,
 ) -> Result<reqwest::Response> {
-    for i in 0..=DEFAULT_RETRY_ATTEMPTS {
+    for i in 0..DEFAULT_RETRY_ATTEMPTS {
         let request = client.request(method.clone(), url);
         let result = request.send().await;
 
