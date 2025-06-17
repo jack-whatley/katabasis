@@ -20,7 +20,11 @@ enum Commands {
     Create {
         name: String,
         game: String,
-    }
+    },
+    Launch {
+        name: String,
+    },
+    List,
 }
 
 #[tokio::main]
@@ -36,13 +40,20 @@ async fn main() -> Result<()> {
         Commands::Target { slug } => {
             if let Some(slug) = slug {
                 println!("{:#?}", manager::specific_target(&slug));
-            }
-            else {
+            } else {
                 println!("{:#?}", manager::all_targets().collect::<Vec<_>>());
             }
         }
         Commands::Create { name, game } => {
             manager::create_collection(&name, &game).await?;
+        }
+        Commands::Launch { name } => {
+            manager::launch_collection_detached(&name).await?;
+        }
+        Commands::List => {
+            for collection in manager::list_collections().await? {
+                println!("{}", collection.name);
+            }
         }
     }
 

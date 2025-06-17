@@ -6,9 +6,9 @@ use tokio::process::Command;
 use crate::targets::{Platform, Target};
 
 /// Works out the correct launch command for the provided [`Target`] and [`Platform`].
-pub fn launch_command(target: Target, platform: Platform) -> Result<Option<Command>> {
+pub fn launch_command(target: Target, platform: Platform) -> Option<Command> {
     match platform {
-        Platform::Steam => steam_command(target).map(Some),
+        Platform::Steam => steam_command(target).ok(),
     }
 }
 
@@ -51,13 +51,13 @@ fn find_steam_exe() -> Option<PathBuf> {
 
 fn steam_game_dir(target: Target) -> Result<PathBuf> {
     let Some(steam) = &target.platforms.steam else {
-        bail!("Target {} does not support Steam", target.name);
+        bail!("target {} does not support Steam", target.name);
     };
 
     let steam_dir = steamlocate::SteamDir::locate()?;
 
     let (app, lib) = steam_dir.find_app(steam.id)?.ok_or_eyre(format!(
-        "Failed to find app {} in Steam library",
+        "failed to find app {} in Steam library",
         target.name
     ))?;
 

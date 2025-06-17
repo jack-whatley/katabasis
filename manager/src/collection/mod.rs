@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::{targets::Target, thunderstore::version::VersionIdent};
 
 pub mod install;
+pub mod launch;
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Collection {
