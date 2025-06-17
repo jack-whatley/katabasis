@@ -128,7 +128,9 @@ impl ModLoader<'_> {
     /// take the target's specific override unless there is none.
     pub fn loader_package(&self) -> Cow<'_, str> {
         match self.kind {
-            ModLoaderKind::BepInEx => Cow::Borrowed(self.package_override.unwrap_or("BepInEx-BepInExPack-5.4.2100")),
+            ModLoaderKind::BepInEx => {
+                Cow::Borrowed(self.package_override.unwrap_or("BepInEx-BepInExPack"))
+            }
         }
     }
 }

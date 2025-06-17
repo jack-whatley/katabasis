@@ -27,7 +27,7 @@ pub async fn fetch_url(
         let result = request.send().await;
 
         match result {
-            Ok(response) => return Ok(response),
+            Ok(response) => return Ok(response.error_for_status()?),
             Err(err) if i <= DEFAULT_RETRY_ATTEMPTS => {
                 tracing::warn!(
                     "Failed to execute request on attempt {}/{}: {}",

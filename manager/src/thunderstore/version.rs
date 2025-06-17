@@ -1,42 +1,50 @@
-use std::fmt::Display;
 use std::str::FromStr;
-use eyre::ensure;
+
+use eyre::OptionExt;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Eq, Clone, Serialize, Deserialize)]
+#[serde(into = "String", try_from = "String")]
 pub struct VersionIdent {
-    namespace: String,
-    name: String,
-    version: Option<String>,
+    str: String,
+    name_index: u16,
+    version_index: u16,
 }
 
 impl VersionIdent {
     pub fn new(namespace: &str, name: &str, version: &str) -> Self {
+        let str = format!("{}-{}-{}", namespace, name, version);
+
+        let name_index = namespace.len() as u16 + 1;
+        let version_index = name_index + name.len() as u16 + 1;
+
         Self {
-            namespace: namespace.to_string(),
-            name: name.to_string(),
-            version: Some(version.to_string()),
+            str,
+            name_index,
+            version_index,
         }
     }
 
-    pub fn split(&self) -> (&str, &str, Option<&str>) {
-        let namespace = &self.namespace;
-        let name = &self.name;
-        let version = self.version.as_deref();
-
-        (namespace, name, version)
-    }
-
     pub fn namespace(&self) -> &str {
-        &self.namespace
+        &self.str[..self.name_index as usize - 1]
     }
 
     pub fn name(&self) -> &str {
-        &self.name
+        &self.str[self.name_index as usize..self.version_index as usize - 1]
     }
 
-    pub fn version(&self) -> Option<&str> {
-        self.version.as_deref()
+    pub fn version(&self) -> &str {
+        &self.str[self.version_index as usize..]
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.str
+    }
+}
+
+impl PartialEq for VersionIdent {
+    fn eq(&self, other: &Self) -> bool {
+        self.str == other.str
     }
 }
 
@@ -44,25 +52,21 @@ impl TryFrom<String> for VersionIdent {
     type Error = eyre::Report;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let parts = value.split('-').collect::<Vec<&str>>();
+        let mut indices = value.match_indices('-').map(|(x, _)| x);
 
-        ensure!(
-            parts.len() >= 2 && parts.len() <= 3,
-            "Version identifier must have between 2 and 3 parts"
-        );
-
-        let version = parts.get(2).and_then(|x| {
-            if x.is_empty() {
-                None
-            } else {
-                Some(x.to_string())
-            }
-        });
+        let version_index = indices
+            .next_back()
+            .ok_or_eyre("failed to fetch version index")? as u16
+            + 1;
+        let name_index = indices
+            .next_back()
+            .ok_or_eyre("failed to fetch name index")? as u16
+            + 1;
 
         Ok(Self {
-            namespace: parts[0].to_string(),
-            name: parts[1].to_string(),
-            version,
+            str: value,
+            name_index,
+            version_index,
         })
     }
 }
@@ -70,18 +74,81 @@ impl TryFrom<String> for VersionIdent {
 impl FromStr for VersionIdent {
     type Err = eyre::Report;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { s.to_string().try_into() }
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.to_string().try_into()
+    }
 }
 
-impl Display for VersionIdent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}-{}", self.namespace, self.name)?;
+impl From<VersionIdent> for String {
+    fn from(value: VersionIdent) -> Self {
+        value.str
+    }
+}
 
-        if let Some(version) = &self.version {
-            write!(f, "-{}", version)?;
-        }
+#[derive(Debug, Eq, Clone, Serialize, Deserialize)]
+#[serde(into = "String", try_from = "String")]
+pub struct PackageIdent {
+    str: String,
+    name_index: u16,
+}
 
-        Ok(())
+impl PackageIdent {
+    pub fn new(namespace: &str, name: &str) -> Self {
+        let str = format!("{}-{}", namespace, name);
+
+        let name_index = namespace.len() as u16 + 1;
+
+        Self { str, name_index }
+    }
+
+    pub fn namespace(&self) -> &str {
+        &self.str[..self.name_index as usize - 1]
+    }
+
+    pub fn name(&self) -> &str {
+        &self.str[self.name_index as usize..]
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.str
+    }
+}
+
+impl PartialEq for PackageIdent {
+    fn eq(&self, other: &Self) -> bool {
+        self.str == other.str
+    }
+}
+
+impl TryFrom<String> for PackageIdent {
+    type Error = eyre::Report;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let mut indices = value.match_indices('-').map(|(x, _)| x);
+
+        let name_index = indices
+            .next_back()
+            .ok_or_eyre("failed to fetch name index")? as u16
+            + 1;
+
+        Ok(Self {
+            str: value,
+            name_index,
+        })
+    }
+}
+
+impl FromStr for PackageIdent {
+    type Err = eyre::Report;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.to_string().try_into()
+    }
+}
+
+impl From<PackageIdent> for String {
+    fn from(value: PackageIdent) -> Self {
+        value.str
     }
 }
 
@@ -90,12 +157,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_valid() {
+    fn test_parse_valid_version_ident() {
         let valid_versions = vec![
             "denikson-BepInExPack_Valheim-5.4.2202",
-            "denikson-BepInExPack_Valheim",
             "ValheimModding-Jotunn-2.25.0",
-            "ValheimModding-Jotunn",
         ];
 
         for version in valid_versions {
@@ -104,32 +169,11 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_valid_specific() {
-        let valid_version = "ValheimModding-Jotunn-2.25.0";
-        let version_ident = VersionIdent::try_from(valid_version.to_string()).unwrap();
+    fn test_parse_valid_package_ident() {
+        let valid_versions = vec!["denikson-BepInExPack_Valheim", "ValheimModding-Jotunn"];
 
-        assert_eq!(version_ident.namespace, "ValheimModding");
-        assert_eq!(version_ident.name, "Jotunn");
-        assert_eq!(version_ident.version, Some("2.25.0".to_string()));
-    }
-
-    #[test]
-    fn test_parse_valid_specific_without_version() {
-        let valid_version = "ValheimModding-Jotunn";
-        let version_ident = VersionIdent::try_from(valid_version.to_string()).unwrap();
-
-        assert_eq!(version_ident.namespace, "ValheimModding");
-        assert_eq!(version_ident.name, "Jotunn");
-        assert_eq!(version_ident.version, None);
-    }
-
-    #[test]
-    fn test_parse_valid_with_extra_chars() {
-        let valid_version = "ValheimModding-Jotunn-";
-        let version_ident = VersionIdent::try_from(valid_version.to_string()).unwrap();
-
-        assert_eq!(version_ident.namespace, "ValheimModding");
-        assert_eq!(version_ident.name, "Jotunn");
-        assert_eq!(version_ident.version, None);
+        for version in valid_versions {
+            PackageIdent::try_from(version.to_string()).unwrap();
+        }
     }
 }

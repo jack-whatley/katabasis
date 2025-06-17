@@ -1,9 +1,9 @@
-mod install;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::{targets::Target, thunderstore::version::VersionIdent};
+
+pub mod install;
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Collection {

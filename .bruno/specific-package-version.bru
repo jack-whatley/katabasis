@@ -1,0 +1,17 @@
+meta {
+  name: specific-package-version
+  type: http
+  seq: 3
+}
+
+get {
+  url: https://thunderstore.io/api/experimental/package/:namespace/:name/:version
+  body: none
+  auth: inherit
+}
+
+params:path {
+  version: 2.25.0
+  name: Jotunn
+  namespace: ValheimModding
+}

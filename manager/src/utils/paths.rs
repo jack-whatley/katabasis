@@ -19,7 +19,18 @@ pub fn db_path() -> PathBuf {
     default_app_dir().join(DB_FILE_NAME)
 }
 
+/// Returns a version of the input [`Collection`] name with any invalid
+/// file system characters removed.
+pub fn sanitise_name(name: &str) -> String {
+    name.replace(
+        ['/', '\\', '?', '*', ':', '\'', '\"', '|', '<', '>', '!'],
+        "_",
+    )
+}
+
 /// Returns the path to a specific collection.
 pub fn collection_dir(id: &str) -> PathBuf {
-    default_app_dir().join("collections").join(id)
+    default_app_dir()
+        .join("collections")
+        .join(sanitise_name(id))
 }
