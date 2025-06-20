@@ -1,7 +1,9 @@
+mod downloader;
+
 use crate::collection::Collection;
 use crate::targets::ModLoaderKind;
 use crate::thunderstore;
-use crate::thunderstore::version::PackageIdent;
+use crate::thunderstore::version::{PackageIdent, VersionIdent};
 use crate::utils::{fs, paths};
 use eyre::Result;
 use std::borrow::Cow;
@@ -10,7 +12,7 @@ use std::str::FromStr;
 
 /// Downloads and sets up the relevant loader and file structure for
 /// the provided [`Collection`].
-pub async fn download_loader(collection: &Collection) -> Result<()> {
+pub async fn download_loader(collection: &Collection) -> Result<VersionIdent> {
     let collection_dir = paths::collection_dir(&collection.name);
 
     tokio::fs::create_dir_all(&collection_dir).await?;
@@ -20,10 +22,10 @@ pub async fn download_loader(collection: &Collection) -> Result<()> {
     }
 }
 
-async fn download_bepinex_loader(collection: &Collection, dir: PathBuf) -> Result<()> {
+async fn download_bepinex_loader(collection: &Collection, dir: PathBuf) -> Result<VersionIdent> {
     let loader_package = collection.game.mod_loader.loader_package();
     let package_ident = PackageIdent::from_str(&loader_package)?;
-    let zip = thunderstore::download_latest_package(&package_ident).await?;
+    let (zip, ident) = thunderstore::download_latest_package(&package_ident).await?;
 
     tokio::task::spawn_blocking(move || -> Result<()> {
         fs::extract_archive(zip, dir, |rel_path| {
@@ -42,5 +44,5 @@ async fn download_bepinex_loader(collection: &Collection, dir: PathBuf) -> Resul
     })
     .await??;
 
-    Ok(())
+    Ok(ident)
 }

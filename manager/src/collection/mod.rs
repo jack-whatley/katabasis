@@ -18,7 +18,6 @@ pub struct Collection {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Plugin {
-    pub id: String,
     pub enabled: bool,
     pub install_time: DateTime<Utc>,
     #[serde(flatten)]
@@ -28,11 +27,21 @@ pub struct Plugin {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum PluginType {
-    Thunderstore(ThunderstorePlugin),
+    Thunderstore { ident: VersionIdent, },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ThunderstorePlugin {
-    pub ident: VersionIdent,
+impl Plugin {
+    pub fn from_ident(ident: &VersionIdent) -> Self {
+        Plugin {
+            enabled: true,
+            install_time: Utc::now(),
+            kind: PluginType::Thunderstore { ident: ident.clone(), },
+        }
+    }
+
+    pub fn ident(&self) -> &VersionIdent {
+        match self.kind {
+            PluginType::Thunderstore { ref ident } => ident,
+        }
+    }
 }

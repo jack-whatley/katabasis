@@ -25,6 +25,10 @@ enum Commands {
         name: String,
     },
     List,
+    AddPlugin {
+        id: String,
+        url: String,
+    }
 }
 
 #[tokio::main]
@@ -54,6 +58,9 @@ async fn main() -> Result<()> {
             for collection in manager::list_collections().await? {
                 println!("{}", collection.name);
             }
+        }
+        Commands::AddPlugin { id, url } => {
+            manager::add_plugin(&id, &url).await?;
         }
     }
 

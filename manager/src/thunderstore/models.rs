@@ -6,6 +6,7 @@ use crate::thunderstore::version::VersionIdent;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Package {
     pub latest: PackageVersion,
+    pub community_listings: Vec<CommunityListing>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,4 +28,18 @@ pub struct PackageMetric {
     pub downloads: i64,
     pub rating_score: i64,
     pub latest_version: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CommunityListing {
+    pub has_nsfw_content: bool,
+    pub community: String,
+}
+
+impl Package {
+    /// Determines whether the provided slug matches any of the communities
+    /// listed on the package.
+    pub fn supports_target(&self, slug: &str) -> bool {
+        self.community_listings.iter().any(|listing| listing.community == slug)
+    }
 }

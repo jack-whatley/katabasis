@@ -1,11 +1,13 @@
-use crate::collection::{Collection, install, launch};
+use crate::collection::{Collection, install, launch, Plugin, PluginType};
 use crate::state::AppState;
 use crate::targets::{self, Platform, Target};
 use crate::utils::paths;
-use crate::{platforms, utils};
-use eyre::{Context, eyre};
+use crate::{platforms, thunderstore, utils};
+use eyre::{Context, eyre, ensure};
 use std::path::PathBuf;
+use chrono::Utc;
 use tokio::process::Command;
+use crate::thunderstore::version::PackageIdent;
 
 /// Returns the [`PathBuf`] to the applications default directory.
 pub fn app_dir() -> PathBuf {
@@ -31,13 +33,15 @@ pub async fn create_collection(name: &str, slug: &str) -> eyre::Result<String> {
     let target = targets::from_slug(slug)
         .ok_or_else(|| eyre!("Slug '{}' does not match any supported games", slug))?;
 
-    let collection = Collection {
+    let mut collection = Collection {
         name: name.to_owned(),
         game: target,
         plugins: vec![],
     };
 
-    install::download_loader(&collection).await?;
+    let installed_version = install::download_loader(&collection).await?;
+
+    collection.plugins.push(Plugin::from_ident(&installed_version));
 
     state.db().save_collection(&collection).await?;
 
@@ -60,24 +64,12 @@ pub async fn launch_collection_detached(name: &str) -> eyre::Result<()> {
 
     launch::link_files(&collection_dir, &game_dir).await?;
 
-    let mut command = if let Some(x) = platforms::launch_command(collection.game, platform) {
-        x
-    } else {
-        if cfg!(target_os = "macos") {
-            let app_dir = launch::app_path(&game_dir).await?;
-            let mut cmd = Command::new("open");
-
-            cmd.arg("-a").arg(app_dir).arg("--args");
-
-            cmd
-        } else {
-            launch::app_path(&game_dir).await.map(Command::new)?
-        }
+    let mut command = if let Some(x) = platforms::launch_command(collection.game, platform) { x }
+    else {
+        launch::app_path(&game_dir).await.map(Command::new)?
     };
 
     launch::add_loader_args(&mut command, &collection_dir, &collection.game.mod_loader).await?;
-
-    tracing::info!("command: {:?}", command);
 
     command.spawn()?;
 
@@ -88,4 +80,32 @@ pub async fn list_collections() -> eyre::Result<Vec<Collection>> {
     let state = AppState::get().await?;
 
     Ok(state.db().load_all_collections().await?)
+}
+
+pub async fn add_plugin(collection_name: &str, url: &str) -> eyre::Result<()> {
+    let state = AppState::get().await?;
+
+    let mut collection = state.db()
+        .load_collection(collection_name)
+        .await?;
+
+    let package_ident = PackageIdent::from_url(url)?;
+    let package = thunderstore::query_latest_package(&package_ident).await?;
+
+    ensure!(
+        package.supports_target(&collection.game.slug),
+        "package '{}' does not support target '{}'",
+        package.latest.ident.name(),
+        collection.game.slug
+    );
+    
+    for dependency in package.latest.dependencies {
+        collection.plugins.push(Plugin::from_ident(&dependency));
+    }
+
+    collection.plugins.push(Plugin::from_ident(&package.latest.ident));
+
+    state.db().save_collection(&collection).await?;
+
+    Ok(())
 }

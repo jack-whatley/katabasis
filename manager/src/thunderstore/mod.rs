@@ -15,13 +15,18 @@ use zip::ZipArchive;
 pub mod models;
 pub mod version;
 
-pub async fn download_latest_package(ident: &PackageIdent) -> Result<PluginZip> {
+pub async fn query_latest_package(ident: &PackageIdent) -> Result<Package> {
     let state = AppState::get().await?;
+    let url = latest_package_url(&ident);
 
-    let package: Package = net::fetch_json(&latest_package_url(ident), state.http()).await?;
+    Ok(net::fetch_json(&url, state.http()).await?)
+}
+
+pub async fn download_latest_package(ident: &PackageIdent) -> Result<(PluginZip, VersionIdent)> {
+    let package = query_latest_package(ident).await?;
     let zip = download_specific_package(&package.latest.ident).await?;
 
-    Ok(zip)
+    Ok((zip, package.latest.ident))
 }
 
 pub async fn download_specific_package(ident: &VersionIdent) -> Result<PluginZip> {

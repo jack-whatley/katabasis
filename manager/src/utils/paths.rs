@@ -1,4 +1,6 @@
 use std::path::PathBuf;
+use crate::collection::Collection;
+use crate::targets::ModLoaderKind;
 
 const APP_GUID: &str = "dev.jackwhatley.katabasis";
 
@@ -33,4 +35,14 @@ pub fn collection_dir(id: &str) -> PathBuf {
     default_app_dir()
         .join("collections")
         .join(sanitise_name(id))
+}
+
+pub fn plugin_dir(collection: &Collection) -> PathBuf {
+    match collection.game.mod_loader.kind {
+        ModLoaderKind::BepInEx => {
+            collection_dir(&collection.name)
+                .join("BepInEx")
+                .join("plugins")
+        }
+    }
 }

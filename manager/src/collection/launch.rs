@@ -56,8 +56,7 @@ async fn bepinex_dll_path(dir: &Path) -> Result<PathBuf> {
     Ok(dll_path)
 }
 
-/// Returns the path to the game's executable. Currently only supports
-/// MacOS and Windows. (Based on App/Exe)
+/// Returns the path to the game's executable.
 pub async fn app_path(app_dir: &Path) -> Result<PathBuf> {
     let app_dir = app_dir.to_path_buf();
 
@@ -72,10 +71,12 @@ pub async fn app_path(app_dir: &Path) -> Result<PathBuf> {
                 let correct_ext = if cfg!(windows) {
                     matches!(ext, Some("exe"))
                 } else {
-                    matches!(ext, Some("app"))
+                    matches!(ext, Some("sh"))
                 };
 
-                correct_ext && !file_name.to_string_lossy().contains("UnityCrashHandler")
+                correct_ext
+                    && !file_name.to_string_lossy().contains("UnityCrashHandler")
+                    && !file_name.to_string_lossy().contains("server")
             })
             .map(|entry| entry.path())
             .ok_or_eyre("failed to find the game's executable")

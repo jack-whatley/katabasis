@@ -1,7 +1,8 @@
-use std::str::FromStr;
-
-use eyre::OptionExt;
+use eyre::{bail, OptionExt, Result};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use std::sync::LazyLock;
 
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 #[serde(into = "String", try_from = "String")]
@@ -35,6 +36,10 @@ impl VersionIdent {
 
     pub fn version(&self) -> &str {
         &self.str[self.version_index as usize..]
+    }
+
+    pub fn as_package_ident(&self) -> PackageIdent {
+        PackageIdent::new(self.namespace(), self.name())
     }
 
     pub fn as_str(&self) -> &str {
@@ -85,6 +90,13 @@ impl From<VersionIdent> for String {
     }
 }
 
+static TH_URL_REGEX: LazyLock<Regex> = LazyLock::new(
+    || {
+        Regex::new(r"https://([A-Za-z0-9.]{4})?thunderstore\.io/c/(?<game>[A-Za-z0-9-]+)/p/(?<namespace>[A-Za-z0-9_]+)/(?<name>[A-Za-z0-9_]+)/")
+            .unwrap()
+    }
+);
+
 #[derive(Debug, Eq, Clone, Serialize, Deserialize)]
 #[serde(into = "String", try_from = "String")]
 pub struct PackageIdent {
@@ -99,6 +111,17 @@ impl PackageIdent {
         let name_index = namespace.len() as u16 + 1;
 
         Self { str, name_index }
+    }
+
+    pub fn from_url(url: &str) -> Result<Self> {
+        if let Some(captures) = TH_URL_REGEX.captures(url) {
+            Ok(Self::new(&captures["namespace"], &captures["name"]))
+        } else {
+            bail!(
+                "provided url '{}' was an invalid thunderstore url, please copy it directly from the browser",
+                url
+            )
+        }
     }
 
     pub fn namespace(&self) -> &str {
