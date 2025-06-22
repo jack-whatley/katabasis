@@ -1,13 +1,12 @@
-use crate::collection::{Collection, install, launch, Plugin, PluginType};
+use crate::collection::{Collection, Plugin, install, launch};
 use crate::state::AppState;
-use crate::targets::{self, Platform, Target};
+use crate::targets::{self, Target};
+use crate::thunderstore::version::PackageIdent;
 use crate::utils::paths;
 use crate::{platforms, thunderstore, utils};
-use eyre::{Context, eyre, ensure};
+use eyre::{Context, ensure, eyre};
 use std::path::PathBuf;
-use chrono::Utc;
 use tokio::process::Command;
-use crate::thunderstore::version::PackageIdent;
 
 /// Returns the [`PathBuf`] to the applications default directory.
 pub fn app_dir() -> PathBuf {
@@ -41,7 +40,9 @@ pub async fn create_collection(name: &str, slug: &str) -> eyre::Result<String> {
 
     let installed_version = install::download_loader(&collection).await?;
 
-    collection.plugins.push(Plugin::from_ident(&installed_version));
+    collection
+        .plugins
+        .push(Plugin::from_ident(&installed_version));
 
     state.db().save_collection(&collection).await?;
 
@@ -64,8 +65,9 @@ pub async fn launch_collection_detached(name: &str) -> eyre::Result<()> {
 
     launch::link_files(&collection_dir, &game_dir).await?;
 
-    let mut command = if let Some(x) = platforms::launch_command(collection.game, platform) { x }
-    else {
+    let mut command = if let Some(x) = platforms::launch_command(collection.game, platform) {
+        x
+    } else {
         launch::app_path(&game_dir).await.map(Command::new)?
     };
 
@@ -85,9 +87,7 @@ pub async fn list_collections() -> eyre::Result<Vec<Collection>> {
 pub async fn add_plugin(collection_name: &str, url: &str) -> eyre::Result<()> {
     let state = AppState::get().await?;
 
-    let mut collection = state.db()
-        .load_collection(collection_name)
-        .await?;
+    let mut collection = state.db().load_collection(collection_name).await?;
 
     let package_ident = PackageIdent::from_url(url)?;
     let package = thunderstore::query_latest_package(&package_ident).await?;
@@ -98,14 +98,24 @@ pub async fn add_plugin(collection_name: &str, url: &str) -> eyre::Result<()> {
         package.latest.ident.name(),
         collection.game.slug
     );
-    
+
     for dependency in package.latest.dependencies {
         collection.plugins.push(Plugin::from_ident(&dependency));
     }
 
-    collection.plugins.push(Plugin::from_ident(&package.latest.ident));
+    collection
+        .plugins
+        .push(Plugin::from_ident(&package.latest.ident));
 
     state.db().save_collection(&collection).await?;
+
+    Ok(())
+}
+
+pub async fn clear_cache() -> eyre::Result<()> {
+    let cache_dir = paths::cache_dir();
+
+    tokio::fs::remove_dir_all(&cache_dir).await?;
 
     Ok(())
 }
