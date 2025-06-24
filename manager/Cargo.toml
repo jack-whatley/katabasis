@@ -18,5 +18,7 @@ strum.workspace = true
 zip.workspace = true
 
 bytes = { version = "1.10.1", features = ["serde"] }
+async-trait = "0.1.88"
 steamlocate = "2.0.1"
+iter_tools = "0.29.0"
 regex = "1.11.1"

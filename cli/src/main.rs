@@ -12,7 +12,6 @@ struct CLI {
 
 #[derive(Subcommand)]
 enum Commands {
-    Directory,
     Target {
         #[arg(short, long)]
         slug: Option<String>,
@@ -38,9 +37,6 @@ async fn main() -> Result<()> {
     let cli = CLI::parse();
 
     match &cli.command {
-        Commands::Directory => {
-            println!("Application Directory: '{}'", manager::app_dir().display());
-        }
         Commands::Target { slug } => {
             if let Some(slug) = slug {
                 println!("{:#?}", manager::specific_target(&slug));

@@ -1,3 +1,4 @@
+use std::hash::Hash;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -39,9 +40,33 @@ impl Plugin {
         }
     }
 
+    pub fn from_moved_ident(ident: VersionIdent) -> Self {
+        Self {
+            enabled: true,
+            install_time: Utc::now(),
+            kind: PluginType::Thunderstore { ident },
+        }
+    }
+
     pub fn ident(&self) -> &VersionIdent {
         match self.kind {
             PluginType::Thunderstore { ref ident } => ident,
         }
+    }
+}
+
+impl PluginType {
+    pub fn ident(&self) -> &VersionIdent {
+        match self {
+            PluginType::Thunderstore { ident } => ident,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        self.ident().name()
+    }
+
+    pub fn full_name(&self) -> &str {
+        self.ident().full_name()
     }
 }

@@ -1,48 +1,56 @@
-mod downloader;
-
-use crate::collection::Collection;
-use crate::targets::ModLoaderKind;
+use crate::collection::{Collection, Plugin};
+use eyre::{ensure, Result};
+use iter_tools::Itertools;
 use crate::thunderstore;
 use crate::thunderstore::version::{PackageIdent, VersionIdent};
-use crate::utils::{fs, paths};
-use eyre::Result;
-use std::borrow::Cow;
-use std::path::PathBuf;
-use std::str::FromStr;
 
-/// Downloads and sets up the relevant loader and file structure for
-/// the provided [`Collection`].
-pub async fn download_loader(collection: &Collection) -> Result<VersionIdent> {
-    let collection_dir = paths::collection_dir(&collection.name);
+pub mod downloader;
+pub mod handler;
 
-    tokio::fs::create_dir_all(&collection_dir).await?;
+pub async fn install_with_deps(
+    collection: &mut Collection,
+    plugin_url: &str,
+) -> Result<()> {
+    let package_ident = PackageIdent::from_url(plugin_url)?;
+    let package = thunderstore::query_latest_package(&package_ident).await?;
 
-    match collection.game.mod_loader.kind {
-        ModLoaderKind::BepInEx => download_bepinex_loader(collection, collection_dir).await,
-    }
+    ensure!(
+        package.supports_target(&collection.game.slug),
+        "package '{}' does not support target '{}'",
+        package.latest.ident.name(),
+        collection.game.slug
+    );
+
+    let all_plugins = fetch_all_plugins(&package.latest.ident.as_package_ident()).await?;
+    let all_current_plugins = &collection.plugins.iter().map(|x| x.ident()).collect::<Vec<_>>();
+
+    let all_plugins = all_plugins.into_iter()
+        .filter(|plugin| !all_current_plugins.contains(&plugin))
+        .map(Plugin::from_moved_ident)
+        .collect::<Vec<_>>();
+
+    downloader::install_plugins(collection, &all_plugins).await?;
+
+    collection.plugins.extend(all_plugins);
+
+    Ok(())
 }
 
-async fn download_bepinex_loader(collection: &Collection, dir: PathBuf) -> Result<VersionIdent> {
-    let loader_package = collection.game.mod_loader.loader_package();
-    let package_ident = PackageIdent::from_str(&loader_package)?;
-    let (zip, ident) = thunderstore::download_latest_package(&package_ident).await?;
+/// Fetches a package based on its [`PackageIdent`] as well as all its dependencies.
+async fn fetch_all_plugins(ident: &PackageIdent) -> Result<Vec<VersionIdent>> {
+    let mut all_plugins: Vec<VersionIdent> = vec![];
+    let package = thunderstore::query_latest_package(ident).await?;
 
-    tokio::task::spawn_blocking(move || -> Result<()> {
-        fs::extract_archive(zip, dir, |rel_path| {
-            let mut components = rel_path.components();
+    all_plugins.push(package.latest.ident);
 
-            if components.clone().count() == 1 {
-                return Ok(None);
-            }
+    for dependencies in package.latest.dependencies {
+        let dependent_dependencies = Box::pin(fetch_all_plugins(&dependencies.as_package_ident())).await?;
 
-            components.next();
+        all_plugins.extend(dependent_dependencies);
+    }
 
-            Ok(Some(Cow::Borrowed(components.as_path())))
-        })?;
-
-        Ok(())
-    })
-    .await??;
-
-    Ok(ident)
+    Ok(all_plugins.into_iter()
+        .unique_by(|id| id.as_str().to_owned())
+        .rev()
+        .collect_vec())
 }

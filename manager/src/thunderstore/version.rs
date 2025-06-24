@@ -38,6 +38,10 @@ impl VersionIdent {
         &self.str[self.version_index as usize..]
     }
 
+    pub fn full_name(&self) -> &str {
+        &self.str[..self.version_index as usize - 1]
+    }
+
     pub fn as_package_ident(&self) -> PackageIdent {
         PackageIdent::new(self.namespace(), self.name())
     }

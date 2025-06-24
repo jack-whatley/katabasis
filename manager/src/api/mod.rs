@@ -8,11 +8,6 @@ use eyre::{Context, ensure, eyre};
 use std::path::PathBuf;
 use tokio::process::Command;
 
-/// Returns the [`PathBuf`] to the applications default directory.
-pub fn app_dir() -> PathBuf {
-    utils::paths::default_app_dir()
-}
-
 /// Returns an iterator of all currently supported application
 /// targets.
 pub fn all_targets() -> impl Iterator<Item = Target> {
@@ -32,17 +27,13 @@ pub async fn create_collection(name: &str, slug: &str) -> eyre::Result<String> {
     let target = targets::from_slug(slug)
         .ok_or_else(|| eyre!("Slug '{}' does not match any supported games", slug))?;
 
-    let mut collection = Collection {
+    let collection = Collection {
         name: name.to_owned(),
         game: target,
         plugins: vec![],
     };
 
-    let installed_version = install::download_loader(&collection).await?;
-
-    collection
-        .plugins
-        .push(Plugin::from_ident(&installed_version));
+    tokio::fs::create_dir_all(paths::collection_dir(&collection.name)).await?;
 
     state.db().save_collection(&collection).await?;
 
@@ -89,23 +80,10 @@ pub async fn add_plugin(collection_name: &str, url: &str) -> eyre::Result<()> {
 
     let mut collection = state.db().load_collection(collection_name).await?;
 
-    let package_ident = PackageIdent::from_url(url)?;
-    let package = thunderstore::query_latest_package(&package_ident).await?;
-
-    ensure!(
-        package.supports_target(&collection.game.slug),
-        "package '{}' does not support target '{}'",
-        package.latest.ident.name(),
-        collection.game.slug
-    );
-
-    for dependency in package.latest.dependencies {
-        collection.plugins.push(Plugin::from_ident(&dependency));
-    }
-
-    collection
-        .plugins
-        .push(Plugin::from_ident(&package.latest.ident));
+    install::install_with_deps(
+        &mut collection,
+        url
+    ).await?;
 
     state.db().save_collection(&collection).await?;
 

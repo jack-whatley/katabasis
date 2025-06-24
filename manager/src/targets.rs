@@ -3,6 +3,9 @@ use std::borrow::Cow;
 use std::fmt;
 use std::sync::LazyLock;
 use strum::{EnumIter, IntoEnumIterator};
+use crate::collection::install::handler::bepinex::BepInExHandler;
+use crate::collection::install::handler::dir_map::{DirectoryMap, MappedInstaller};
+use crate::collection::install::handler::PluginHandler;
 
 const TARGET_JSON: &str = include_str!("../targets.json");
 
@@ -124,13 +127,31 @@ impl fmt::Display for ModLoader<'_> {
 }
 
 impl ModLoader<'_> {
-    /// Returns the name of the Thunderstore package of the loader, will always
-    /// take the target's specific override unless there is none.
-    pub fn loader_package(&self) -> Cow<'_, str> {
-        match self.kind {
-            ModLoaderKind::BepInEx => {
-                Cow::Borrowed(self.package_override.unwrap_or("BepInEx-BepInExPack"))
+    fn is_loader_plugin(&self, name: &str) -> bool {
+        if let Some(plugin_name) = self.package_override {
+            plugin_name == name
+        }
+        else {
+            match &self.kind {
+                ModLoaderKind::BepInEx => name.starts_with("BepInEx-BepInExPack")
             }
+        }
+    }
+}
+
+impl ModLoader<'static> {
+    pub fn installer_for_plugin(&'static self, plugin_name: &str) -> Box<dyn PluginHandler> {
+        match (self.is_loader_plugin(plugin_name), &self.kind) {
+            (true, ModLoaderKind::BepInEx) => Box::new(BepInExHandler),
+            (false, ModLoaderKind::BepInEx) => {
+                const MAPPED_DIRS: &[DirectoryMap] = &[
+                    DirectoryMap::flattened("plugins", "BepInEx/plugins"),
+                    DirectoryMap::flattened("core", "BepInEx/core"),
+                    DirectoryMap::none("config", "BepInEx/config").files_mutable(),
+                ];
+
+                Box::new(MappedInstaller::new(MAPPED_DIRS, 0))
+            },
         }
     }
 }
