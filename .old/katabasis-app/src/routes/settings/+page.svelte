@@ -1,1 +1,0 @@
-<div>settings page...</div>
