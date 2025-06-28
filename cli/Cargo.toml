@@ -11,4 +11,4 @@ tracing-subscriber.workspace = true
 
 clap = { version = "4.5.39", features = ["derive"] }
 
-manager = { path = "../manager" }
+manager = { path = "../manager", features = ["cli"] }

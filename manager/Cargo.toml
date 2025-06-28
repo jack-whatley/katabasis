@@ -16,9 +16,16 @@ serde_json.workspace = true
 chrono.workspace = true
 strum.workspace = true
 zip.workspace = true
+dashmap.workspace = true
 
 bytes = { version = "1.10.1", features = ["serde"] }
+uuid = { version = "1.17.0", features = ["v4", "serde"] }
 async-trait = "0.1.88"
 steamlocate = "2.0.1"
 iter_tools = "0.29.0"
 regex = "1.11.1"
+
+indicatif = { version = "0.17.11", optional = true }
+
+[features]
+cli = ["dep:indicatif"]

@@ -54,3 +54,11 @@ pub fn cache_dir() -> PathBuf {
 pub fn plugin_cache_dir() -> PathBuf {
     cache_dir().join("plugins")
 }
+
+pub fn collection_export_path(name: &str) -> PathBuf {
+    dirs_next::desktop_dir().unwrap().join(format!("{}.kbcollection", name))
+}
+
+pub fn log_path() -> PathBuf {
+    default_app_dir().join("katabasis.log")
+}

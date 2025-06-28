@@ -1,5 +1,5 @@
 use crate::collection::{Collection, Plugin};
-use crate::thunderstore;
+use crate::{event, thunderstore};
 use crate::thunderstore::version::VersionIdent;
 use crate::utils::paths;
 use eyre::{ensure, Result};
@@ -7,6 +7,13 @@ use std::path::PathBuf;
 
 /// Downloads all provided plugins to the collection. Will not check for duplicates.
 pub async fn install_plugins(collection: &Collection, plugins: &Vec<Plugin>) -> Result<()> {
+    let progress_id = event::init_loading(
+        "Downloading plugins",
+        plugins.len() as f64
+    )?;
+
+    let mut download_progress = 0f64;
+
     for plugin in plugins {
         if !try_cache_install(collection, plugin).await? {
             download_to_cache(collection, plugin).await?;
@@ -16,6 +23,14 @@ pub async fn install_plugins(collection: &Collection, plugins: &Vec<Plugin>) -> 
                 "failed to install plugin after downloading it to cache"
             )
         }
+
+        download_progress += 1f64;
+
+        event::emit_loading(
+            &progress_id,
+            1f64,
+            Some(&format!("Downloading plugin {} / {}", download_progress, plugins.len()))
+        )?;
     }
 
     Ok(())

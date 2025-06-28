@@ -6,6 +6,7 @@ use crate::{targets::Target, thunderstore::version::VersionIdent};
 
 pub mod install;
 pub mod launch;
+pub mod export;
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Collection {

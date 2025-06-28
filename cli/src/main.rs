@@ -27,12 +27,25 @@ enum Commands {
     AddPlugin {
         id: String,
         url: String,
+    },
+    Export {
+        id: String,
+    },
+    Import {
+        path: String,
+    },
+    Remove {
+        id: String,
+    },
+    Shortcut {
+        id: String,
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    logger::setup()?;
+    logger::setup().await?;
+    manager::event::EventState::init().await?;
 
     let cli = CLI::parse();
 
@@ -57,6 +70,18 @@ async fn main() -> Result<()> {
         }
         Commands::AddPlugin { id, url } => {
             manager::add_plugin(&id, &url).await?;
+        }
+        Commands::Export { id } => {
+            manager::export_collection(&id).await?;
+        }
+        Commands::Import { path } => {
+            manager::import_collection(path).await?;
+        }
+        Commands::Remove { id } => {
+            manager::remove_collection(&id).await?;
+        }
+        Commands::Shortcut { id } => {
+            manager::create_shortcut(&id).await?;
         }
     }
 

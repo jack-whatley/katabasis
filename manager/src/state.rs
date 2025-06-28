@@ -38,6 +38,11 @@ impl AppState {
     async fn init() -> Result<Arc<Self>> {
         let app_dir = crate::utils::paths::default_app_dir();
 
+        // Initialising the application directory, should always exist.
+        if !app_dir.exists() {
+            tokio::fs::create_dir_all(&app_dir).await?;
+        }
+
         let (db, db_existed) = Db::init().await?;
         let http = net::init()?;
 
@@ -46,11 +51,6 @@ impl AppState {
             http,
             db_existed,
         };
-
-        // Initialising the application directory, should always exist.
-        if !app_dir.exists() {
-            tokio::fs::create_dir_all(&app_dir).await?;
-        }
 
         Ok(Arc::new(app_state))
     }

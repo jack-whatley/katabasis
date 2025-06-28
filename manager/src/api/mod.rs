@@ -1,10 +1,10 @@
-use crate::collection::{Collection, Plugin, install, launch};
+use crate::collection::export::ExportCollection;
+use crate::collection::{install, launch, Collection};
 use crate::state::AppState;
 use crate::targets::{self, Target};
-use crate::thunderstore::version::PackageIdent;
 use crate::utils::paths;
-use crate::{platforms, thunderstore, utils};
-use eyre::{Context, ensure, eyre};
+use crate::platforms;
+use eyre::{eyre, Context};
 use std::path::PathBuf;
 use tokio::process::Command;
 
@@ -94,6 +94,53 @@ pub async fn clear_cache() -> eyre::Result<()> {
     let cache_dir = paths::cache_dir();
 
     tokio::fs::remove_dir_all(&cache_dir).await?;
+
+    Ok(())
+}
+
+pub async fn export_collection(collection_name: &str) -> eyre::Result<()> {
+    let state = AppState::get().await?;
+    let collection = state.db().load_collection(collection_name).await?;
+    let export = ExportCollection::from_collection(&collection);
+
+    export.export().await?;
+
+    Ok(())
+}
+
+pub async fn import_collection(collection_path: &str) -> eyre::Result<()> {
+    let state = AppState::get().await?;
+    let export = ExportCollection::from_file(collection_path).await?;
+
+    let new_id = create_collection(&export.name, &export.slug).await?;
+    let mut collection = state.db().load_collection(&new_id).await?;
+
+    install::install_without_deps(&mut collection, export.plugins.as_slice()).await?;
+
+    state.db().save_collection(&collection).await?;
+
+    Ok(())
+}
+
+pub async fn remove_collection(collection_name: &str) -> eyre::Result<()> {
+    let state = AppState::get().await?;
+    let collection = state.db().load_collection(collection_name).await?;
+
+    tokio::fs::remove_dir_all(paths::collection_dir(&collection.name)).await?;
+    state.db().remove_collection(&collection).await?;
+
+    Ok(())
+}
+
+pub fn log_path() -> PathBuf {
+    paths::log_path()
+}
+
+pub async fn create_shortcut(collection_name: &str) -> eyre::Result<()> {
+    let state = AppState::get().await?;
+    let collection = state.db().load_collection(collection_name).await?;
+
+    launch::create_link(&collection).await?;
 
     Ok(())
 }

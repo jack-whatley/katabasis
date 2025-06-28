@@ -36,6 +36,21 @@ pub async fn install_with_deps(
     Ok(())
 }
 
+pub async fn install_without_deps(
+    collection: &mut Collection,
+    idents: &[VersionIdent],
+) -> Result<()> {
+    let new_plugins = idents.into_iter()
+        .map(Plugin::from_ident)
+        .collect::<Vec<_>>();
+
+    downloader::install_plugins(collection, &new_plugins).await?;
+
+    collection.plugins.extend(new_plugins);
+
+    Ok(())
+}
+
 /// Fetches a package based on its [`PackageIdent`] as well as all its dependencies.
 async fn fetch_all_plugins(ident: &PackageIdent) -> Result<Vec<VersionIdent>> {
     let mut all_plugins: Vec<VersionIdent> = vec![];

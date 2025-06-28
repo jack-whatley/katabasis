@@ -4,8 +4,9 @@ use std::{
 };
 
 use crate::targets::{ModLoader, ModLoaderKind};
-use eyre::{OptionExt, Result};
+use eyre::{ensure, Context, OptionExt, Result};
 use tokio::process::Command;
+use crate::collection::Collection;
 
 pub async fn add_loader_args(
     command: &mut Command,
@@ -113,6 +114,49 @@ pub async fn link_files(collection_dir: &Path, game_dir: &Path) -> Result<()> {
         }
 
         // TODO: Copy directories here too...
+    }
+
+    Ok(())
+}
+
+pub async fn create_link(collection: &Collection) -> Result<()> {
+    let desktop_dir = dirs_next::desktop_dir()
+        .ok_or_eyre("failed to get desktop directory")?;
+
+    #[cfg(target_os = "windows")]
+    {
+        let shortcut_path =
+            desktop_dir.join(format!("KB - {} - {}.lnk", collection.game.name, collection.name));
+
+        let exe_path = std::env::current_exe()?;
+
+        const NO_TERM_WINDOW: u32 = 0x08000000;
+
+        let command = format!(
+            "$ws = New-Object -ComObject WScript.Shell; \
+             $shortcut = $ws.CreateShortcut('{}'); \
+             $shortcut.TargetPath = '{}'; \
+             $shortcut.Arguments = 'launch {}'; \
+             $shortcut.Save()",
+            shortcut_path.to_string_lossy().replace("\\", "\\\\"),
+            exe_path.to_string_lossy().replace("\\", "\\\\"),
+            collection.name
+        );
+
+        tracing::info!("Shortcut command\n{}", command);
+
+        let result = Command::new("powershell")
+            .creation_flags(NO_TERM_WINDOW)
+            .arg("-Command")
+            .arg(&command)
+            .status()
+            .await
+            .context("failed to execute powershell link command")?;
+
+        ensure!(
+            result.success(),
+            "failed to execute powershell link command, return was not successful"
+        );
     }
 
     Ok(())
