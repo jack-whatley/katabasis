@@ -2,6 +2,7 @@ use dashmap::DashMap;
 use eyre::{eyre, OptionExt, Result};
 use serde::Serialize;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::OnceCell;
 use uuid::Uuid;
 
@@ -89,6 +90,8 @@ pub fn init_loading(
                         .template("{spinner:.green} [{elapsed_precise}] [{bar:.lime/green}] {pos}/{len} {msg}")?
                         .progress_chars("=>-"),
                 );
+
+                bar.enable_steady_tick(Duration::from_millis(100));
 
                 bar
             }

@@ -8,6 +8,10 @@ use eyre::{eyre, Context};
 use std::path::PathBuf;
 use tokio::process::Command;
 
+pub use {
+  crate::collection::{FrontendCollection, FrontendPlugin}  
+};
+
 /// Returns an iterator of all currently supported application
 /// targets.
 pub fn all_targets() -> impl Iterator<Item = Target> {
@@ -17,6 +21,10 @@ pub fn all_targets() -> impl Iterator<Item = Target> {
 /// Returns a specific target based on the provided slug.
 pub fn specific_target(slug: &str) -> Option<Target> {
     targets::from_slug(slug)
+}
+
+pub async fn first_usage() -> eyre::Result<bool> {
+    Ok(!AppState::get().await?.db_existed())
 }
 
 /// Initialises a new [`Collection`] into the application. Will install

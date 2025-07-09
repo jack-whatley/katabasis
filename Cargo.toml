@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["cli", "manager"]
+members = ["cli", "manager", "katabasis/src-tauri"]
 
 [profile.release]
 opt-level = "s"

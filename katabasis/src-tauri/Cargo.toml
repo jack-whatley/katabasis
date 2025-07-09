@@ -1,0 +1,24 @@
+[package]
+name = "katabasis"
+version = "0.1.0"
+description = "A Tauri based mod manager."
+authors = ["Jack Whatley"]
+edition = "2024"
+
+[lib]
+name = "katabasis_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+
+serde.workspace = true
+serde_json.workspace = true
+eyre.workspace = true
+tracing.workspace = true
+
+manager = { path = "../../manager" }

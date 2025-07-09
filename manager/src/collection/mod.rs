@@ -1,4 +1,3 @@
-use std::hash::Hash;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -69,5 +68,45 @@ impl PluginType {
 
     pub fn full_name(&self) -> &str {
         self.ident().full_name()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrontendCollection {
+    pub name: String,
+    pub target: String,
+    pub plugins: Vec<FrontendPlugin>,
+    pub mod_loader: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrontendPlugin {
+    pub enabled: bool,
+    pub install_time: DateTime<Utc>,
+    pub ident: String,
+    pub full_name: String,
+}
+
+impl Into<FrontendPlugin> for Plugin {
+    fn into(self) -> FrontendPlugin {
+        FrontendPlugin {
+            enabled: self.enabled,
+            install_time: self.install_time,
+            ident: self.ident().as_str().to_string(),
+            full_name: self.ident().full_name().to_string(),
+        }
+    }
+}
+
+impl Into<FrontendCollection> for Collection {
+    fn into(self) -> FrontendCollection {
+        FrontendCollection {
+            name: self.name,
+            target: self.game.name.to_owned(),
+            plugins: self.plugins.into_iter().map(Into::into).collect(),
+            mod_loader: self.game.mod_loader.to_string(),
+        }
     }
 }

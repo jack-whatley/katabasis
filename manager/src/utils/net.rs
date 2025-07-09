@@ -28,7 +28,7 @@ pub async fn fetch_url(
 
         match result {
             Ok(response) => return Ok(response.error_for_status()?),
-            Err(err) if i <= DEFAULT_RETRY_ATTEMPTS => {
+            Err(err) if i < DEFAULT_RETRY_ATTEMPTS => {
                 tracing::warn!(
                     "Failed to execute request on attempt {}/{}: {}",
                     i + 1,
